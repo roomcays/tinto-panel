@@ -1,4 +1,4 @@
-project( tint2 )
+project( tinto )
 cmake_minimum_required( VERSION 2.6 )
 
 include( FindPkgConfig )
@@ -80,6 +80,8 @@ set( DATADIR share CACHE PATH "Directory for shared data" )
 set( SYSCONFDIR /etc CACHE PATH "Directory for configuration files" )
 set( DOCDIR share/doc/tint2 CACHE PATH "Directory for documentation files" )
 
+add_definitions(-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200809L) # for strdup to work
+
 if( ENABLE_TINT2CONF )
   add_definitions( -DHAVE_VERSION_H )
   add_subdirectory( src/tint2conf )
@@ -96,8 +98,8 @@ link_directories( ${X11_LIBRARY_DIRS}
                   ${GOBJECT2_LIBRARY_DIRS}
                   ${IMLIB2_LIBRARY_DIRS}
 		  ${SN_LIBRARY_DIRS} )
-add_executable(tint2 ${SOURCES})
-target_link_libraries( tint2 ${X11_LIBRARIES}
+add_executable(tinto ${SOURCES})
+target_link_libraries( tinto ${X11_LIBRARIES}
                              ${PANGOCAIRO_LIBRARIES}
                              ${PANGO_LIBRARIES}
                              ${CAIRO_LIBRARIES}
@@ -106,16 +108,16 @@ target_link_libraries( tint2 ${X11_LIBRARIES}
                              ${IMLIB2_LIBRARIES}
 			     ${SN_LIBRARIES} )
 if( RT_LIBRARY )
-  target_link_libraries( tint2 ${RT_LIBRARY} )
+  target_link_libraries( tinto ${RT_LIBRARY} )
 endif( RT_LIBRARY )
 
-add_dependencies( tint2 version )
-set_target_properties( tint2 PROPERTIES COMPILE_FLAGS "-Wall -pthread" )
-set_target_properties(tint2 PROPERTIES LINK_FLAGS "-pthread" )
+add_dependencies( tinto version )
+set_target_properties( tinto PROPERTIES COMPILE_FLAGS "-Wall -pthread -std=c11 -g" )
+set_target_properties(tinto PROPERTIES LINK_FLAGS "-pthread" )
 
-install( TARGETS tint2 DESTINATION bin )
-install( FILES sample/tint2rc DESTINATION ${SYSCONFDIR}/xdg/tint2 )
-install( FILES default_icon.png DESTINATION ${DATADIR}/tint2 )
+install( TARGETS tinto DESTINATION bin )
+install( FILES sample/tint2rc DESTINATION ${SYSCONFDIR}/xdg/tinto )
+install( FILES default_icon.png DESTINATION ${DATADIR}/tinto )
 install( FILES AUTHORS ChangeLog README DESTINATION ${DOCDIR} )
 install( FILES doc/tint2.1 DESTINATION ${MANDIR}/man1 )
 if( ENABLE_EXAMPLES )

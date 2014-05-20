@@ -214,7 +214,7 @@ void init_X11()
 	setlocale (LC_ALL, "");
 	// config file use '.' as decimal separator
 	setlocale(LC_NUMERIC, "POSIX");
-	
+
 	// load default icon
 	gchar *path;
 	const gchar * const *data_dirs;
@@ -1026,16 +1026,16 @@ start:
 	init (argc, argv);
 	init_X11();
 
-	i = 0;
-	if (config_path)
-		i = config_read_file (config_path);
-	else
-		i = config_read ();
-	if (!i) {
-		fprintf(stderr, "usage: tint2 [-c] <config_file>\n");
-		cleanup();
-		exit(1);
-	}
+  bool okay = false;
+  if (config_path)
+    okay = config_read_file(config_path);
+  else
+    okay = config_read();
+  if (!okay) {
+    fprintf(stderr, "usage: tint2 [-c] <config_file>\n");
+    cleanup();
+    exit(1);
+  }
 
 	init_panel();
 	if (snapshot_path) {
@@ -1359,5 +1359,3 @@ start:
 		}
 	}
 }
-
-

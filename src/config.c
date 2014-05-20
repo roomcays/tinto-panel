@@ -53,27 +53,22 @@
 #include "battery.h"
 #endif
 
-// global path
-char *config_path;
-char *snapshot_path;
+// Path to the configuration file.
+char* config_path;
+// Path to a file to store the image.
+char* snapshot_path;
+// Indicates if the newer configuration file syntax is being used or not.
+static bool new_config_file;
 
-// --------------------------------------------------
-// backward compatibility
-// detect if it's an old config file (==1)
-static int new_config_file;
-
-
-void default_config()
-{
-	config_path = 0;
-	snapshot_path = 0;
-	new_config_file = 0;
+void default_config(void) {
+  config_path = NULL;
+  snapshot_path = NULL;
+  new_config_file = false;
 }
 
-void cleanup_config()
-{
-	if (config_path) g_free(config_path);
-	if (snapshot_path) g_free(snapshot_path);
+void cleanup_config(void) {
+  if (config_path) free(config_path);
+  if (snapshot_path) free(snapshot_path);
 }
 
 
@@ -127,7 +122,7 @@ int config_get_monitor(char* monitor)
 			// monitor specified by name, not by index
 			int i, j;
 			for (i=0; i<server.nb_monitor; ++i) {
-				if (server.monitor[i].names == 0) 
+				if (server.monitor[i].names == 0)
 					// xrandr can't identify monitors
 					continue;
 				j = 0;
@@ -198,7 +193,7 @@ void add_entry (char *key, char *value)
 		}
 	}
 	else if (strcmp (key, "panel_items") == 0) {
-		new_config_file = 1;
+		new_config_file = true;
 		panel_items_order = strdup(value);
 		int j;
 		for (j=0 ; j < strlen(panel_items_order) ; j++) {
@@ -334,14 +329,14 @@ void add_entry (char *key, char *value)
 
 	/* Clock */
 	else if (strcmp (key, "time1_format") == 0) {
-		if (new_config_file == 0) {
+		if (!new_config_file) {
 			clock_enabled = 1;
 			if (panel_items_order) {
 				char* tmp = g_strconcat(panel_items_order, "C", NULL);
 				g_free( panel_items_order );
 				panel_items_order = tmp;
 			}
-			else 
+			else
 				panel_items_order = g_strdup("C");
 		}
 		if (strlen(value) > 0) {
@@ -524,7 +519,7 @@ void add_entry (char *key, char *value)
 
 	/* Systray */
 	else if (strcmp (key, "systray_padding") == 0) {
-		if (new_config_file == 0 && systray_enabled == 0) {
+		if (!new_config_file && systray_enabled == 0) {
 			systray_enabled = 1;
 			if (panel_items_order) {
 				char* tmp = g_strconcat(panel_items_order, "S", NULL);
@@ -662,7 +657,7 @@ void add_entry (char *key, char *value)
 
 	// old config option
 	else if (strcmp(key, "systray") == 0) {
-		if (new_config_file == 0) {
+		if (!new_config_file) {
 			systray_enabled = atoi(value);
 			if (systray_enabled) {
 				if (panel_items_order) {
@@ -676,7 +671,7 @@ void add_entry (char *key, char *value)
 		}
 	}
 	else if (strcmp(key, "battery") == 0) {
-		if (new_config_file == 0) {
+		if (!new_config_file) {
 			battery_enabled = atoi(value);
 			if (battery_enabled) {
 				if (panel_items_order) {
@@ -697,85 +692,82 @@ void add_entry (char *key, char *value)
 	if (value3) free (value3);
 }
 
+/// @brief Tries to find a configuration file.
+///
+/// Checks if user's local configuration file exists, if so uses it as the
+/// configuration file, in case the file does not exists i tries to find
+/// the system wide configuration file and copies it to the the user
+/// configuration file location.
+///
+/// @return true in case of succcess or false otherwise.
+bool config_read(void) {
+  char* local_conf_dir = g_build_filename(g_get_user_config_dir(), "tinto", NULL);
+  char* local_conf_file = g_build_filename(local_conf_dir, "tinto.conf", NULL);
+  if (g_file_test(local_conf_file, G_FILE_TEST_EXISTS)) {
+    bool okay = config_read_file(local_conf_file);
+    config_path = local_conf_file;
+    local_conf_file = NULL;
+    return okay;
+  }
 
-int config_read ()
-{
-	const gchar * const * system_dirs;
-	char *path1;
-	gint i;
+  const char* const* system_dirs = g_get_system_config_dirs();
+  char* sys_conf_file = NULL;
+  for (size_t i = 0; system_dirs[i]; ++i) {
+    sys_conf_file = g_build_filename(system_dirs[i], "tinto", "tinto.conf", NULL);
 
-	// follow XDG specification
-	// check tint2rc in user directory
-	path1 = g_build_filename (g_get_user_config_dir(), "tint2", "tint2rc", NULL);
-	if (g_file_test (path1, G_FILE_TEST_EXISTS)) {
-		i = config_read_file (path1);
-		config_path = strdup(path1);
-		g_free(path1);
-		return i;
-	}
-	g_free(path1);
+    if (g_file_test(sys_conf_file, G_FILE_TEST_EXISTS)) break;
 
-	// copy tint2rc from system directory to user directory
-	char *path2 = 0;
-	system_dirs = g_get_system_config_dirs();
-	for (i = 0; system_dirs[i]; i++) {
-		path2 = g_build_filename(system_dirs[i], "tint2", "tint2rc", NULL);
+    free(sys_conf_file);
+    sys_conf_file = NULL;
+  }
 
-		if (g_file_test(path2, G_FILE_TEST_EXISTS)) break;
-		g_free (path2);
-		path2 = 0;
-	}
+  if (sys_conf_file) {
+    if (!g_file_test(local_conf_dir, G_FILE_TEST_IS_DIR)) mkdir(local_conf_dir, 0777);
 
-	if (path2) {
-		// copy file in user directory (path1)
-		char *dir = g_build_filename (g_get_user_config_dir(), "tint2", NULL);
-		if (!g_file_test (dir, G_FILE_TEST_IS_DIR)) g_mkdir(dir, 0777);
-		g_free(dir);
+    free(local_conf_dir);
 
-		path1 = g_build_filename (g_get_user_config_dir(), "tint2", "tint2rc", NULL);
-		copy_file(path2, path1);
-		g_free(path2);
+    copy_file(sys_conf_file, local_conf_file);
+    free(sys_conf_file);
 
-		i = config_read_file (path1);
-		config_path = strdup(path1);
-		g_free(path1);
-		return i;
-	}
-	return 0;
+    bool okay = config_read_file(local_conf_file);
+    config_path = local_conf_file;
+    local_conf_file = NULL;
+    return okay;
+  }
+  return false;
 }
 
+/// @brief Reads and parses a configuration file.
+/// @return true in case of success or false otherwise.
+bool config_read_file(const char* path) {
+  FILE* fh = fopen(path, "r");
+  if (!fh) return false;
 
-int config_read_file (const char *path)
-{
-	FILE *fp;
-	char line[512];
-	char *key, *value;
+  char line[512];
+  char* key = NULL, *value = NULL;
+  while (fgets(line, 512, fh) != NULL) {
+    if (parse_line(line, &key, &value)) {
+      add_entry(key, value);
+      free(key);
+      free(value);
+    }
+  }
+  fclose(fh);
 
-	if ((fp = fopen(path, "r")) == NULL) return 0;
+  // append Taskbar item
+  if (!new_config_file) {
+    taskbar_enabled = 1;
+    if (panel_items_order) {
+      char* str = malloc(strlen(panel_items_order) + 2U);
+      if (!str) return false;
+      strcpy(str, "T");
+      strcat(str, panel_items_order);
+      free(panel_items_order);
+      panel_items_order = str;
+    }
+    else
+      panel_items_order = strdup("T");
+  }
 
-	while (fgets(line, sizeof(line), fp) != NULL) {
-		if (parse_line(line, &key, &value)) {
-			add_entry (key, value);
-			free (key);
-			free (value);
-		}
-	}
-	fclose (fp);
-	
-	// append Taskbar item
-	if (new_config_file == 0) {
-		taskbar_enabled = 1;
-		if (panel_items_order) {
-			char* tmp = g_strconcat( "T", panel_items_order, NULL );
-			g_free(panel_items_order);
-			panel_items_order = tmp;
-		}
-		else 
-			panel_items_order = g_strdup("T");
-	}
-
-	return 1;
+  return true;
 }
-
-
-

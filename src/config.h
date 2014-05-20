@@ -9,17 +9,21 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-extern char *config_path;
-extern char *snapshot_path;
+#include <stdbool.h>
+
+extern char* config_path;
+extern char* snapshot_path;
 
 // default global data
-void default_config();
+void default_config(void);
 
 // freed memory
-void cleanup_config();
+void cleanup_config(void);
 
-int  config_read_file (const char *path);
-int  config_read ();
+// Tries to read a given configuration file.
+bool config_read_file(const char* path);
+
+// Tries the default config from instalation path.
+bool config_read(void);
 
 #endif
-
