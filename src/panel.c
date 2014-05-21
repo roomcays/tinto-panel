@@ -174,7 +174,7 @@ void init_panel()
 		init_panel_size_and_position(p);
 		// add childs according to panel_items
 		for (k=0 ; k < strlen(panel_items_order) ; k++) {
-			if (panel_items_order[k] == 'L') 
+			if (panel_items_order[k] == 'L')
 				init_launcher_panel(p);
 			if (panel_items_order[k] == 'T')
 				init_taskbar_panel(p);
@@ -219,7 +219,7 @@ void init_panel()
 
 		if (panel_autohide)
 			add_timeout(panel_autohide_hide_timeout, 0, autohide_hide, p);
-		
+
 		visible_taskbar(p);
 	}
 
@@ -228,88 +228,87 @@ void init_panel()
 }
 
 
-void init_panel_size_and_position(Panel *panel)
-{
+void init_panel_size_and_position(Panel* panel) {
 	// detect panel size
-	if (panel_horizontal) {
-		if (panel->pourcentx)
-			panel->area.width = (float)server.monitor[panel->monitor].width * panel->area.width / 100;
-		if (panel->pourcenty)
-			panel->area.height = (float)server.monitor[panel->monitor].height * panel->area.height / 100;
-		if (panel->area.width + panel->marginx > server.monitor[panel->monitor].width)
-			panel->area.width = server.monitor[panel->monitor].width - panel->marginx;
-		if (panel->area.bg->border.rounded > panel->area.height/2) {
-			printf("panel_background_id rounded is too big... please fix your tint2rc\n");
-			g_array_append_val(backgrounds, *panel->area.bg);
-			panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len-1);
-			panel->area.bg->border.rounded = panel->area.height/2;
-		}
-	}
-	else {
-		int old_panel_height = panel->area.height;
-		if (panel->pourcentx)
-			panel->area.height = (float)server.monitor[panel->monitor].height * panel->area.width / 100;
-		else
-			panel->area.height = panel->area.width;
-		if (panel->pourcenty)
-			panel->area.width = (float)server.monitor[panel->monitor].width * old_panel_height / 100;
-		else
-			panel->area.width = old_panel_height;
-		if (panel->area.height + panel->marginy > server.monitor[panel->monitor].height)
-			panel->area.height = server.monitor[panel->monitor].height - panel->marginy;
-		if (panel->area.bg->border.rounded > panel->area.width/2) {
-			printf("panel_background_id rounded is too big... please fix your tint2rc\n");
-			g_array_append_val(backgrounds, *panel->area.bg);
-			panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len-1);
-			panel->area.bg->border.rounded = panel->area.width/2;
-		}
-	}
+  if (panel_horizontal) {
+    if (panel->pourcentx)
+      panel->area.width = server.monitor[panel->monitor].width * panel->area.width / 100.0F;
+    if (panel->pourcenty)
+      panel->area.height = (float)server.monitor[panel->monitor].height * panel->area.height / 100.0F;
+    if (panel->area.width + panel->marginx > server.monitor[panel->monitor].width)
+      panel->area.width = server.monitor[panel->monitor].width - panel->marginx;
+    if (panel->area.bg->border.rounded > panel->area.height/2) {
+      printf("panel_background_id rounded is too big... please fix your tint2rc\n");
+      g_array_append_val(backgrounds, *panel->area.bg);
+      panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
+      panel->area.bg->border.rounded = panel->area.height / 2;
+    }
+  }
+  else {
+    int old_panel_height = panel->area.height;
+    if (panel->pourcentx)
+      panel->area.height = server.monitor[panel->monitor].height * panel->area.width / 100.0F;
+    else
+      panel->area.height = panel->area.width;
+    if (panel->pourcenty)
+      panel->area.width = server.monitor[panel->monitor].width * old_panel_height / 100.0F;
+    else
+      panel->area.width = old_panel_height;
+    if (panel->area.height + panel->marginy > server.monitor[panel->monitor].height)
+      panel->area.height = server.monitor[panel->monitor].height - panel->marginy;
+    if (panel->area.bg->border.rounded > panel->area.width / 2) {
+      printf("panel_background_id rounded is too big... please fix your tint2rc\n");
+      g_array_append_val(backgrounds, *panel->area.bg);
+      panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
+      panel->area.bg->border.rounded = panel->area.width / 2;
+    }
+  }
 
-	// panel position determined here
-	if (panel_position & LEFT) {
-		panel->posx = server.monitor[panel->monitor].x + panel->marginx;
-	}
-	else {
-		if (panel_position & RIGHT) {
-			panel->posx = server.monitor[panel->monitor].x + server.monitor[panel->monitor].width - panel->area.width - panel->marginx;
-		}
-		else {
-			if (panel_horizontal)
-				panel->posx = server.monitor[panel->monitor].x + ((server.monitor[panel->monitor].width - panel->area.width) / 2);
-			else
-				panel->posx = server.monitor[panel->monitor].x + panel->marginx;
-		}
-	}
-	if (panel_position & TOP) {
-		panel->posy = server.monitor[panel->monitor].y + panel->marginy;
-	}
-	else {
-		if (panel_position & BOTTOM) {
-			panel->posy = server.monitor[panel->monitor].y + server.monitor[panel->monitor].height - panel->area.height - panel->marginy;
-		}
-		else {
-			panel->posy = server.monitor[panel->monitor].y + ((server.monitor[panel->monitor].height - panel->area.height) / 2);
-		}
-	}
+  // panel position determined here
+  if (panel_position & LEFT) {
+    panel->posx = server.monitor[panel->monitor].x + panel->marginx;
+  }
+  else {
+    if (panel_position & RIGHT) {
+      panel->posx = server.monitor[panel->monitor].x + server.monitor[panel->monitor].width - panel->area.width - panel->marginx;
+    }
+    else {
+      if (panel_horizontal)
+        panel->posx = server.monitor[panel->monitor].x + ((server.monitor[panel->monitor].width - panel->area.width) / 2);
+      else
+        panel->posx = server.monitor[panel->monitor].x + panel->marginx;
+    }
+  }
+  if (panel_position & TOP) {
+    panel->posy = server.monitor[panel->monitor].y + panel->marginy;
+  }
+  else {
+    if (panel_position & BOTTOM) {
+      panel->posy = server.monitor[panel->monitor].y + server.monitor[panel->monitor].height - panel->area.height - panel->marginy;
+    }
+    else {
+      panel->posy = server.monitor[panel->monitor].y + ((server.monitor[panel->monitor].height - panel->area.height) / 2);
+    }
+  }
 
-	// autohide or strut_policy=minimum
-	int diff = (panel_horizontal ? panel->area.height : panel->area.width) - panel_autohide_height;
-	if (panel_horizontal) {
-		panel->hidden_width = panel->area.width;
-		panel->hidden_height = panel->area.height - diff;
-	}
-	else {
-		panel->hidden_width = panel->area.width - diff;
-		panel->hidden_height = panel->area.height;
-	}
-	// printf("panel : posx %d, posy %d, width %d, height %d\n", panel->posx, panel->posy, panel->area.width, panel->area.height);
+  // autohide or strut_policy=minimum
+  int diff = (panel_horizontal ? panel->area.height : panel->area.width) - panel_autohide_height;
+  if (panel_horizontal) {
+    panel->hidden_width = panel->area.width;
+    panel->hidden_height = panel->area.height - diff;
+  }
+  else {
+    panel->hidden_width = panel->area.width - diff;
+    panel->hidden_height = panel->area.height;
+  }
+  // printf("panel : posx %d, posy %d, width %d, height %d\n", panel->posx, panel->posy, panel->area.width, panel->area.height);
 }
 
 
 int resize_panel(void *obj)
 {
 	resize_by_layout(obj, 0);
-	
+
 	//printf("resize_panel\n");
 	if (panel_mode != MULTI_DESKTOP && taskbar_enabled) {
 		// propagate width/height on hidden taskbar
@@ -385,21 +384,21 @@ void update_strut(Panel* p)
 void set_panel_items_order(Panel *p)
 {
 	int k, j;
-	
+
 	if (p->area.list) {
 		g_slist_free(p->area.list);
 		p->area.list = 0;
 	}
 
 	for (k=0 ; k < strlen(panel_items_order) ; k++) {
-		if (panel_items_order[k] == 'L') 
+		if (panel_items_order[k] == 'L')
 			p->area.list = g_slist_append(p->area.list, &p->launcher);
 		if (panel_items_order[k] == 'T') {
 			for (j=0 ; j < p->nb_desktop ; j++)
 				p->area.list = g_slist_append(p->area.list, &p->taskbar[j]);
 		}
 #ifdef ENABLE_BATTERY
-		if (panel_items_order[k] == 'B') 
+		if (panel_items_order[k] == 'B')
 			p->area.list = g_slist_append(p->area.list, &p->battery);
 #endif
 		if (panel_items_order[k] == 'S' && p == panel1) {
@@ -534,7 +533,7 @@ void set_panel_background(Panel *p)
 		a = l0->data;
 		set_redraw(a);
 	}
-	
+
 	// reset task/taskbar 'state_pix'
 	int i, k;
 	Taskbar *tskbar;
@@ -569,43 +568,44 @@ Panel *get_panel(Window win)
 }
 
 
-Taskbar *click_taskbar (Panel *panel, int x, int y)
-{
+Taskbar* click_taskbar (Panel* panel, point_T  point) {
 	Taskbar *tskbar;
 	int i;
 
 	if (panel_horizontal) {
 		for (i=0; i < panel->nb_desktop ; i++) {
 			tskbar = &panel->taskbar[i];
-			if (tskbar->area.on_screen && x >= tskbar->area.posx && x <= (tskbar->area.posx + tskbar->area.width))
-				return tskbar;
+		  if (tskbar->area.on_screen && point.x >= tskbar->area.posx
+                      && point.x <= (tskbar->area.posx + tskbar->area.width))
+                    return tskbar;
 		}
 	}
 	else {
 		for (i=0; i < panel->nb_desktop ; i++) {
 			tskbar = &panel->taskbar[i];
-			if (tskbar->area.on_screen && y >= tskbar->area.posy && y <= (tskbar->area.posy + tskbar->area.height))
-				return tskbar;
+		  if (tskbar->area.on_screen && point.y >= tskbar->area.posy
+                      && point.y <= (tskbar->area.posy + tskbar->area.height))
+                    return tskbar;
 		}
 	}
 	return NULL;
 }
 
 
-Task *click_task (Panel *panel, int x, int y)
-{
+Task* click_task(Panel* panel, point_T point) {
 	GSList *l0;
 	Taskbar *tskbar;
 
-	if ( (tskbar = click_taskbar(panel, x, y)) ) {
+	if ( (tskbar = click_taskbar(panel, point)) ) {
 		if (panel_horizontal) {
 			Task *tsk;
 			l0 = tskbar->area.list;
 			if (taskbarname_enabled) l0 = l0->next;
 			for (; l0 ; l0 = l0->next) {
 				tsk = l0->data;
-				if (tsk->area.on_screen && x >= tsk->area.posx && x <= (tsk->area.posx + tsk->area.width)) {
-					return tsk;
+				if (tsk->area.on_screen && point.x >= tsk->area.posx
+                                    && point.x <= (tsk->area.posx + tsk->area.width)) {
+                                  return tsk;
 				}
 			}
 		}
@@ -615,7 +615,8 @@ Task *click_task (Panel *panel, int x, int y)
 			if (taskbarname_enabled) l0 = l0->next;
 			for (; l0 ; l0 = l0->next) {
 				tsk = l0->data;
-				if (tsk->area.on_screen && y >= tsk->area.posy && y <= (tsk->area.posy + tsk->area.height)) {
+				if (tsk->area.on_screen && point.y >= tsk->area.posy
+                                    && point.y <= (tsk->area.posy + tsk->area.height)) {
 					return tsk;
 				}
 			}
@@ -625,89 +626,89 @@ Task *click_task (Panel *panel, int x, int y)
 }
 
 
-Launcher *click_launcher (Panel *panel, int x, int y)
-{
+Launcher* click_launcher(Panel* panel, point_T point) {
 	Launcher *launcher = &panel->launcher;
-	
+
 	if (panel_horizontal) {
-		if (launcher->area.on_screen && x >= launcher->area.posx && x <= (launcher->area.posx + launcher->area.width))
-			return launcher;
+          if (launcher->area.on_screen && point.x >= launcher->area.posx
+              && point.x <= (launcher->area.posx + launcher->area.width)) {
+            return launcher;
+          }
 	}
 	else {
-		if (launcher->area.on_screen && y >= launcher->area.posy && y <= (launcher->area.posy + launcher->area.height))
-			return launcher;
+          if (launcher->area.on_screen && point.y >= launcher->area.posy
+              && point.y <= (launcher->area.posy + launcher->area.height)) {
+            return launcher;
+          }
 	}
 	return NULL;
 }
 
 
-LauncherIcon *click_launcher_icon (Panel *panel, int x, int y)
-{
-	GSList *l0;
-	Launcher *launcher;
+LauncherIcon *click_launcher_icon(Panel* panel, point_T point) {
+  GSList* l0;
+  Launcher* launcher;
 
-	//printf("Click x=%d y=%d\n", x, y);
-	if ( (launcher = click_launcher(panel, x, y)) ) {
-		LauncherIcon *icon;
-		for (l0 = launcher->list_icons; l0 ; l0 = l0->next) {
-			icon = l0->data;
-			if (x >= (launcher->area.posx + icon->x) && x <= (launcher->area.posx + icon->x + icon->icon_size) &&
-				y >= (launcher->area.posy + icon->y) && y <= (launcher->area.posy + icon->y + icon->icon_size)) {
-				//printf("Hit rect x=%d y=%d xmax=%d ymax=%d\n", launcher->area.posx + icon->x, launcher->area.posy + icon->y, launcher->area.posx + icon->x + icon->width, launcher->area.posy + icon->y + icon->height);
-				return icon;
-			}
-		}
-	}
-	return NULL;
+  //printf("Click x=%d y=%d\n", x, y);
+  if ((launcher = click_launcher(panel, point))) {
+    LauncherIcon *icon;
+    for (l0 = launcher->list_icons; l0 ; l0 = l0->next) {
+      icon = l0->data;
+      if (point.x >= (launcher->area.posx + icon->x) && point.x <= (launcher->area.posx + icon->x + icon->icon_size) &&
+          point.y >= (launcher->area.posy + icon->y) && point.y <= (launcher->area.posy + icon->y + icon->icon_size)) {
+        //printf("Hit rect x=%d y=%d xmax=%d ymax=%d\n", launcher->area.posx + icon->x, launcher->area.posy + icon->y, launcher->area.posx + icon->x + icon->width, launcher->area.posy + icon->y + icon->height);
+        return icon;
+      }
+    }
+  }
+  return NULL;
 }
 
 
-int click_padding(Panel *panel, int x, int y)
-{
-	if (panel_horizontal) {
-		if (x < panel->area.paddingxlr || x > panel->area.width-panel->area.paddingxlr)
-		return 1;
-	}
-	else {
-		if (y < panel->area.paddingxlr || y > panel->area.height-panel->area.paddingxlr)
-		return 1;
-	}
-	return 0;
+/* int click_padding(Panel *panel, int x, int y) */
+/* { */
+/* 	if (panel_horizontal) { */
+/* 		if (x < panel->area.paddingxlr || x > panel->area.width-panel->area.paddingxlr) */
+/* 		return 1; */
+/* 	} */
+/* 	else { */
+/* 		if (y < panel->area.paddingxlr || y > panel->area.height-panel->area.paddingxlr) */
+/* 		return 1; */
+/* 	} */
+/* 	return 0; */
+/* } */
+
+
+bool click_clock(Panel *panel, point_T point) {
+  Clock clk = panel->clock;
+  if (panel_horizontal) {
+    if (clk.area.on_screen && point.x >= clk.area.posx && point.x <= (clk.area.posx + clk.area.width))
+      return true;
+  } else {
+    if (clk.area.on_screen && point.y >= clk.area.posy && point.y <= (clk.area.posy + clk.area.height))
+      return true;
+  }
+  return false;
 }
 
 
-int click_clock(Panel *panel, int x, int y)
-{
-	Clock clk = panel->clock;
-	if (panel_horizontal) {
-		if (clk.area.on_screen && x >= clk.area.posx && x <= (clk.area.posx + clk.area.width))
-			return TRUE;
-	} else {
-		if (clk.area.on_screen && y >= clk.area.posy && y <= (clk.area.posy + clk.area.height))
-			return TRUE;
-	}
-	return FALSE;
-}
-
-
-Area* click_area(Panel *panel, int x, int y)
-{
-	Area* result = &panel->area;
-	Area* new_result = result;
-	do {
-		result = new_result;
-		GSList* it = result->list;
-		while (it) {
-			Area* a = it->data;
-			if (a->on_screen && x >= a->posx && x <= (a->posx + a->width)
-					&& y >= a->posy && y <= (a->posy + a->height)) {
-				new_result = a;
-				break;
-			}
-			it = it->next;
-		}
-	} while (new_result != result);
-	return result;
+Area* click_area(Panel* panel, point_T point) {
+  Area* result = &panel->area;
+  Area* new_result = result;
+  do {
+    result = new_result;
+    GSList* it = result->list;
+    while (it) {
+      Area* a = it->data;
+      if (a->on_screen && point.x >= a->posx && point.x <= (a->posx + a->width)
+          && point.y >= a->posy && point.y <= (a->posy + a->height)) {
+        new_result = a;
+        break;
+      }
+      it = it->next;
+    }
+  } while (new_result != result);
+  return result;
 }
 
 

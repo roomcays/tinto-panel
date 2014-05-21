@@ -12,6 +12,12 @@
 #include <Imlib2.h>
 #include "area.h"
 
+
+typedef struct {
+  int x;
+  int y;
+} point_T;
+
 /*
 void fxfree(void** ptr){
   if(*ptr){
@@ -58,4 +64,3 @@ void createHeuristicMask(DATA32* data, int w, int h);
 
 void render_image(Drawable d, int x, int y, int w, int h);
 #endif
-

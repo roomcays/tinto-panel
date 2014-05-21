@@ -13,6 +13,7 @@
 
 #include <pango/pangocairo.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #include "common.h"
 #include "clock.h"
@@ -125,34 +126,34 @@ extern int  nb_panel;
 
 
 // default global data
-void default_panel();
+void default_panel(void);
 
 // freed memory
-void cleanup_panel();
+void cleanup_panel(void);
 
 // realloc panels according to number of monitor
 // use panel_config as default value
-void init_panel();
+void init_panel(void);
 
-void init_panel_size_and_position(Panel *panel);
-int  resize_panel(void *obj);
+void init_panel_size_and_position(Panel* panel);
+int  resize_panel(void* obj);
 
-void set_panel_items_order(Panel *p);
-void set_panel_properties(Panel *p);
+void set_panel_items_order(Panel* p);
+void set_panel_properties(Panel* p);
 
 // draw background panel
-void set_panel_background(Panel *p);
+void set_panel_background(Panel* p);
 
 // detect witch panel
-Panel *get_panel(Window win);
+Panel* get_panel(Window win);
 
-Taskbar *click_taskbar (Panel *panel, int x, int y);
-Task *click_task (Panel *panel, int x, int y);
-Launcher *click_launcher (Panel *panel, int x, int y);
-LauncherIcon *click_launcher_icon (Panel *panel, int x, int y);
-int click_padding(Panel *panel, int x, int y);
-int click_clock(Panel *panel, int x, int y);
-Area* click_area(Panel *panel, int x, int y);
+Taskbar* click_taskbar(Panel* panel, point_T point);
+Task* click_task(Panel* panel, point_T point);
+Launcher* click_launcher(Panel* panel, point_T point);
+LauncherIcon* click_launcher_icon(Panel* panel, point_T point);
+// int click_padding(Panel* panel, int x, int y); // unused function.
+bool click_clock(Panel* panel, point_T point);
+Area* click_area(Panel* panel, point_T point);
 
 void autohide_show(void* p);
 void autohide_hide(void* p);
