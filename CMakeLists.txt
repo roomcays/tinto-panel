@@ -58,7 +58,8 @@ set( SOURCES src/config.c
              src/util/area.c
              src/util/common.c
              src/util/timer.c
-             src/util/window.c )
+             src/util/window.c
+             src/util/debug.c )
 
 option( ENABLE_BATTERY "Enable battery status plugin" ON )
 option( ENABLE_TINT2CONF "Enable tint2conf build, a GTK+2 theme switcher for tint2" ON )

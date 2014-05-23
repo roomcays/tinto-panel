@@ -32,7 +32,8 @@
 #include "task.h"
 #include "panel.h"
 #include "tooltip.h"
-
+#include "debug.h"
+#include "common.h"
 
 int signal_pending;
 // --------------------------------------------------
@@ -132,9 +133,9 @@ void init_panel()
 	Panel *p;
 
 	if (panel_config.monitor > (server.nb_monitor-1)) {
-		// server.nb_monitor minimum value is 1 (see get_monitors())
-		fprintf(stderr, "warning : monitor not found. tint2 default to all monitors.\n");
-		panel_config.monitor = 0;
+          // server.nb_monitor minimum value is 1 (see get_monitors())
+          WARN("Monitor not found. tint2 default to all monitors.");
+          panel_config.monitor = 0;
 	}
 
 	init_tooltip();
@@ -157,7 +158,8 @@ void init_panel()
 		memcpy(&panel1[i], &panel_config, sizeof(Panel));
 	}
 
-	fprintf(stderr, "tint2 : nb monitor %d, nb monitor used %d, nb desktop %d\n", server.nb_monitor, nb_panel, server.nb_desktop);
+	MESSAGE("tint2 : nb monitor %d, nb monitor used %d, nb desktop %d\n",
+             server.nb_monitor, nb_panel, server.nb_desktop);
 	for (i=0 ; i < nb_panel ; i++) {
 		p = &panel1[i];
 
@@ -229,66 +231,79 @@ void init_panel()
 
 
 void init_panel_size_and_position(Panel* panel) {
-	// detect panel size
   if (panel_horizontal) {
-    if (panel->pourcentx)
-      panel->area.width = server.monitor[panel->monitor].width * panel->area.width / 100.0F;
-    if (panel->pourcenty)
-      panel->area.height = (float)server.monitor[panel->monitor].height * panel->area.height / 100.0F;
-    if (panel->area.width + panel->marginx > server.monitor[panel->monitor].width)
+    if (panel->pourcentx) {
+      panel->area.width = server.monitor[panel->monitor].width
+        * panel->area.width / 100.0F;
+    }
+
+    if (panel->pourcenty) {
+      panel->area.height = server.monitor[panel->monitor].height
+        * panel->area.height / 100.0F;
+    }
+
+    if (panel->area.width + panel->marginx
+        > server.monitor[panel->monitor].width) {
       panel->area.width = server.monitor[panel->monitor].width - panel->marginx;
-    if (panel->area.bg->border.rounded > panel->area.height/2) {
-      printf("panel_background_id rounded is too big... please fix your tint2rc\n");
+    }
+
+    if (panel->area.bg->border.rounded > panel->area.height >> 1) {
       g_array_append_val(backgrounds, *panel->area.bg);
-      panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
-      panel->area.bg->border.rounded = panel->area.height / 2;
+      panel->area.bg = &g_array_index(backgrounds, Background,
+                                      backgrounds->len - 1);
+      panel->area.bg->border.rounded = panel->area.height >> 2;
     }
   }
   else {
-    int old_panel_height = panel->area.height;
-    if (panel->pourcentx)
-      panel->area.height = server.monitor[panel->monitor].height * panel->area.width / 100.0F;
-    else
-      panel->area.height = panel->area.width;
-    if (panel->pourcenty)
-      panel->area.width = server.monitor[panel->monitor].width * old_panel_height / 100.0F;
-    else
-      panel->area.width = old_panel_height;
-    if (panel->area.height + panel->marginy > server.monitor[panel->monitor].height)
-      panel->area.height = server.monitor[panel->monitor].height - panel->marginy;
-    if (panel->area.bg->border.rounded > panel->area.width / 2) {
-      printf("panel_background_id rounded is too big... please fix your tint2rc\n");
+    SWAP_INTEGER(panel->area.height, panel->area.width);
+    SWAP_INTEGER(panel->marginy, panel->marginx);
+    if (panel->pourcentx) {
+      panel->area.height = server.monitor[panel->monitor].height
+        * panel->area.height / 100.0F;
+    }
+
+    if (panel->pourcenty) {
+      panel->area.width = server.monitor[panel->monitor].width
+        * panel->area.width / 100.0F;
+    }
+
+    if (panel->area.height + panel->marginy
+        > server.monitor[panel->monitor].height) {
+      panel->area.height = server.monitor[panel->monitor].height
+        - panel->marginy;
+    }
+
+    if (panel->area.bg->border.rounded > panel->area.width >> 1) {
       g_array_append_val(backgrounds, *panel->area.bg);
-      panel->area.bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
-      panel->area.bg->border.rounded = panel->area.width / 2;
+      panel->area.bg = &g_array_index(backgrounds, Background,
+                                      backgrounds->len - 1);
+      panel->area.bg->border.rounded = panel->area.width >> 2;
     }
   }
 
-  // panel position determined here
+  // Horizontal contraints (LEFT, RIGHT and CENTER).
   if (panel_position & LEFT) {
-    panel->posx = server.monitor[panel->monitor].x + panel->marginx;
+    panel->posx = server.monitor[panel->monitor].x + (panel->marginx >> 1);
+  } else if (panel_position & RIGHT) {
+      panel->posx = server.monitor[panel->monitor].x
+        + server.monitor[panel->monitor].width - panel->area.width
+        - (panel->marginx >> 1);
   }
   else {
-    if (panel_position & RIGHT) {
-      panel->posx = server.monitor[panel->monitor].x + server.monitor[panel->monitor].width - panel->area.width - panel->marginx;
-    }
-    else {
-      if (panel_horizontal)
-        panel->posx = server.monitor[panel->monitor].x + ((server.monitor[panel->monitor].width - panel->area.width) / 2);
-      else
-        panel->posx = server.monitor[panel->monitor].x + panel->marginx;
-    }
+    if (panel_horizontal)
+      panel->posx = server.monitor[panel->monitor].x
+        + (server.monitor[panel->monitor].width - panel->area.width) / 2;
+    else panel->posx = server.monitor[panel->monitor].x + panel->marginx;
   }
+
+  // Vertical constraints (TOP and LEFT).
   if (panel_position & TOP) {
     panel->posy = server.monitor[panel->monitor].y + panel->marginy;
   }
   else {
-    if (panel_position & BOTTOM) {
-      panel->posy = server.monitor[panel->monitor].y + server.monitor[panel->monitor].height - panel->area.height - panel->marginy;
-    }
-    else {
-      panel->posy = server.monitor[panel->monitor].y + ((server.monitor[panel->monitor].height - panel->area.height) / 2);
-    }
+    panel->posy = server.monitor[panel->monitor].y
+      + server.monitor[panel->monitor].height - panel->area.height
+      - panel->marginy;
   }
 
   // autohide or strut_policy=minimum

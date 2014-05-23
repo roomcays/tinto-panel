@@ -63,4 +63,21 @@ void adjust_asb(DATA32 *data, int w, int h, int alpha, float satur, float bright
 void createHeuristicMask(DATA32* data, int w, int h);
 
 void render_image(Drawable d, int x, int y, int w, int h);
+
+#ifndef SWAP_INTEGER
+/*
+ * @brief Swap the values of the integers a and b.
+ *
+ * @param a a non const integer lvalue which will have the value of b when this
+ * macro finishes.
+ *
+ * @param b a non const integer lvalue which will have the value of a when this
+ * macro finishes.
+ */
+#define SWAP_INTEGER(a, b)  { \
+  a ^= b;                     \
+  b ^= a;                     \
+  a ^= b;                     \
+  }
+#endif // SWAP_INTEGER
 #endif
