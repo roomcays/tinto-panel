@@ -1,0 +1,5 @@
+* Tinto Panel
+Tinto panel is fork of the Tint2 panel available at [[http://code.google.com/p/tint2/][Google Code]].
+
+
+
