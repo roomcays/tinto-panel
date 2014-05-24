@@ -49,6 +49,7 @@
 #include "timer.h"
 #include "xsettings-client.h"
 #include "common.h"
+#include "debug.h"
 
 // Drag and Drop state variables
 Window dnd_source_window;
@@ -57,19 +58,14 @@ int dnd_version;
 Atom dnd_selection;
 Atom dnd_atom;
 int dnd_sent_request;
-char *dnd_launcher_exec;
+char* dnd_launcher_exec;
 
-void signal_handler(int sig)
-{
-	// signal handler is light as it should be
-	signal_pending = sig;
+void signal_handler(int sig) {
+  // signal handler is light as it should be
+  signal_pending = sig;
 }
 
-
-void init (int argc, char *argv[])
-{
-	int i;
-
+void init (int argc, char *argv[]) {
 	// set global data
 	default_config();
 	default_timeout();
@@ -85,35 +81,33 @@ void init (int argc, char *argv[])
 	default_panel();
 
 	// read options
-	for (i = 1; i < argc; ++i) {
-		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help"))	{
-			printf("Usage: tint2 [-c] <config_file>\n");
-			exit(0);
-		}
-		if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))	{
-			printf("tint2 version %s\n", VERSION_STRING);
-			exit(0);
-		}
-		if (!strcmp(argv[i], "-c")) {
-			i++;
-			if (i < argc)
-				config_path = strdup(argv[i]);
-		}
-		if (!strcmp(argv[i], "-s"))	{
-			i++;
-			if (i < argc)
-				snapshot_path = strdup(argv[i]);
-		}
+	for (int i = 1; i < argc; ++i) {
+          if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            DIE("Usage: tint2 [-c] <config_file>\n");
+          }
+          else if (strcmp(argv[i], "-v") == 0
+                   || strcmp(argv[i], "--version") == 0) {
+            DIE("tint2 version %s\n", VERSION_STRING);
+          }
+          else if (strcmp(argv[i], "-c") == 0) {
+            if (++i < argc)
+              config_path = strdup(argv[i]);
+          }
+          else if (strcmp(argv[i], "-s") == 0) {
+            if (++i < argc)
+              snapshot_path = strdup(argv[i]);
+          }
 	}
+
 	// Set signal handler
 	signal_pending = 0;
 	struct sigaction sa = { .sa_handler = signal_handler };
 	struct sigaction sa_chld = { .sa_handler = SIG_DFL, .sa_flags = SA_NOCLDWAIT };
-	sigaction(SIGUSR1, &sa, 0);
-	sigaction(SIGINT, &sa, 0);
-	sigaction(SIGTERM, &sa, 0);
-	sigaction(SIGHUP, &sa, 0);
-	sigaction(SIGCHLD, &sa_chld, 0);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGCHLD, &sa_chld, NULL);
 
 	// BSD does not support pselect(), therefore we have to use select and hope that we do not
 	// end up in a race condition there (see 'man select()' on a linux machine for more information)

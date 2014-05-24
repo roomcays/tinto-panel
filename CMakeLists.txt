@@ -1,30 +1,33 @@
-project( tinto )
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required(VERSION 2.8)
+set(PROJECT_NAME "tinto")
+project(${PROJECT_NAME} C)
 
-include( FindPkgConfig )
-include( CheckLibraryExists )
-pkg_check_modules( X11 REQUIRED x11 xcomposite xdamage xinerama xrender xrandr>=1.3 )
-pkg_check_modules( PANGOCAIRO REQUIRED pangocairo )
-pkg_check_modules( PANGO REQUIRED pango )
-pkg_check_modules( CAIRO REQUIRED cairo )
-pkg_check_modules( GLIB2 REQUIRED glib-2.0 )
-pkg_check_modules( GOBJECT2 REQUIRED gobject-2.0 )
-pkg_check_modules( IMLIB2 REQUIRED imlib2>=1.4.2 )
-pkg_check_modules( SN libstartup-notification-1.0>=0.12 )
-find_library( RT_LIBRARY rt )
+include(CheckFunctionExists)
+include(CheckLibraryExists)
+include(FindPkgConfig)
 
-if( NOT X11_FOUND OR NOT PANGOCAIRO_FOUND OR NOT PANGO_FOUND OR NOT CAIRO_FOUND OR NOT GLIB2_FOUND OR NOT GOBJECT2_FOUND OR NOT IMLIB2_FOUND )
-  message( FATAL_ERROR "Not all dependencies fulfilled. See http://code.google.com/p/tint2/wiki/Install" )
-endif( NOT X11_FOUND OR NOT PANGOCAIRO_FOUND OR NOT PANGO_FOUND OR NOT CAIRO_FOUND OR NOT GLIB2_FOUND OR NOT GOBJECT2_FOUND OR NOT IMLIB2_FOUND )
+pkg_check_modules(X11 REQUIRED x11 xcomposite xdamage xinerama xrender xrandr>=1.3)
+pkg_check_modules(PANGOCAIRO REQUIRED pangocairo)
+pkg_check_modules(PANGO REQUIRED pango)
+pkg_check_modules(CAIRO REQUIRED cairo)
+pkg_check_modules(GLIB2 REQUIRED glib-2.0)
+pkg_check_modules(GOBJECT2 REQUIRED gobject-2.0)
+pkg_check_modules(IMLIB2 REQUIRED imlib2>=1.4.2)
+pkg_check_modules(SN libstartup-notification-1.0>=0.12)
+find_library(RT_LIBRARY rt)
 
-string( REPLACE ";" " " FLAGS_REPLACED "${IMLIB2_LDFLAGS}" )
-set( CMAKE_REQUIRED_FLAGS "${FLAGS_REPLACED}" )
-check_library_exists( "${IMLIB2_LIBRARIES}" "imlib_context_set_display" "${IMLIB2_LIBRARY_DIRS}" IMLIB_BUILD_WITH_X )
-if( NOT IMLIB_BUILD_WITH_X )
-  message( FATAL_ERROR "Imlib is not build with x support" )
-endif( NOT IMLIB_BUILD_WITH_X )
+if(NOT X11_FOUND OR NOT PANGOCAIRO_FOUND OR NOT PANGO_FOUND OR NOT CAIRO_FOUND OR NOT GLIB2_FOUND OR NOT GOBJECT2_FOUND OR NOT IMLIB2_FOUND)
+  message(FATAL_ERROR "Package(s) needed to build tinto are missing.")
+endif(NOT X11_FOUND OR NOT PANGOCAIRO_FOUND OR NOT PANGO_FOUND OR NOT CAIRO_FOUND OR NOT GLIB2_FOUND OR NOT GOBJECT2_FOUND OR NOT IMLIB2_FOUND)
 
-include_directories( ${PROJECT_BINARY_DIR}
+string(REPLACE ";" " " FLAGS_REPLACED "${IMLIB2_LDFLAGS}")
+set(CMAKE_REQUIRED_FLAGS "${FLAGS_REPLACED}")
+check_library_exists("${IMLIB2_LIBRARIES}" "imlib_context_set_display" "${IMLIB2_LIBRARY_DIRS}" IMLIB_BUILD_WITH_X)
+if(NOT IMLIB_BUILD_WITH_X)
+  message(FATAL_ERROR "Imlib is not build with x support")
+endif(NOT IMLIB_BUILD_WITH_X)
+
+include_directories(${PROJECT_BINARY_DIR}
                      src
                      src/battery
                      src/clock
@@ -40,12 +43,12 @@ include_directories( ${PROJECT_BINARY_DIR}
                      ${GLIB2_INCLUDE_DIRS}
                      ${GOBJECT2_INCLUDE_DIRS}
                      ${IMLIB2_INCLUDE_DIRS}
-		     ${SN_INCLUDE_DIRS} )
+		     ${SN_INCLUDE_DIRS})
 
-set( SOURCES src/config.c
+set(SOURCES src/config.c
              src/panel.c
              src/server.c
-             src/tint.c
+             src/tinto.c
              src/clock/clock.c
              src/systray/systraybar.c
              src/launcher/launcher.c
@@ -59,69 +62,90 @@ set( SOURCES src/config.c
              src/util/common.c
              src/util/timer.c
              src/util/window.c
-             src/util/debug.c )
+             src/util/debug.c)
 
-option( ENABLE_BATTERY "Enable battery status plugin" ON )
-option( ENABLE_TINT2CONF "Enable tint2conf build, a GTK+2 theme switcher for tint2" ON )
-option( ENABLE_EXAMPLES "Install additional tin2rc examples" OFF )
-option( ENABLE_SN "Startup notification support" ON )
-if( ENABLE_SN )
-  if( SN_FOUND )
-    add_definitions( -DHAVE_SN -DSN_API_NOT_YET_FROZEN )
-  endif( SN_FOUND )
-endif( ENABLE_SN)
+option(ENABLE_BATTERY "Enable battery status plugin." ON)
+option(ENABLE_TINTOCONF "Enable tint2conf build, a GTK+2 theme switcher for tint2." OFF )
+option(ENABLE_EXAMPLES "Install additional tin2rc examples." OFF)
+option(ENABLE_SN "Startup notification support." ON)
+if(ENABLE_SN)
+  if(SN_FOUND)
+    add_definitions(-DHAVE_SN -DSN_API_NOT_YET_FROZEN)
+  endif(SN_FOUND)
+endif(ENABLE_SN)
 
-if( ENABLE_BATTERY )
-  set( SOURCES ${SOURCES} src/battery/battery.c )
-  add_definitions( -DENABLE_BATTERY )
-endif( ENABLE_BATTERY )
+if(ENABLE_BATTERY)
+  set(SOURCES ${SOURCES} src/battery/battery.c)
+  add_definitions(-DENABLE_BATTERY)
+endif(ENABLE_BATTERY)
 
-set( MANDIR share/man CACHE PATH "Directory for man pages" )
-set( DATADIR share CACHE PATH "Directory for shared data" )
-set( SYSCONFDIR /etc CACHE PATH "Directory for configuration files" )
-set( DOCDIR share/doc/tint2 CACHE PATH "Directory for documentation files" )
+set(MANDIR share/man CACHE PATH "Directory for man pages.")
+set(DATADIR share CACHE PATH "Directory for shared data.")
+set(SYSCONFDIR /etc CACHE PATH "Directory for configuration files.")
+set(DOCDIR share/doc/tint2 CACHE PATH "Directory for documentation files.")
 
-add_definitions(-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200809L) # for strdup to work
+add_definitions(-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200809L)
 
-if( ENABLE_TINT2CONF )
-  add_definitions( -DHAVE_VERSION_H )
-  add_subdirectory( src/tint2conf )
-  add_dependencies( tint2conf version )
-endif( ENABLE_TINT2CONF )
+if(ENABLE_TINTOCONF)
+  add_definitions(-DHAVE_VERSION_H)
+  add_subdirectory(src/tintoconf)
+  add_dependencies(tintoconf version)
+endif(ENABLE_TINTOCONF)
 
-add_custom_target( version ALL "${PROJECT_SOURCE_DIR}/get_svnrev.sh" "\"${PROJECT_SOURCE_DIR}\"" )
+add_custom_target(version ALL "${PROJECT_SOURCE_DIR}/get_svnrev.sh" "\"${PROJECT_SOURCE_DIR}\"")
 
-link_directories( ${X11_LIBRARY_DIRS}
-                  ${PANGOCAIRO_LIBRARY_DIRS}
-                  ${PANGO_LIBRARY_DIRS}
-                  ${CAIRO_LIBRARY_DIRS}
-                  ${GLIB2_LIBRARY_DIRS}
-                  ${GOBJECT2_LIBRARY_DIRS}
-                  ${IMLIB2_LIBRARY_DIRS}
-		  ${SN_LIBRARY_DIRS} )
-add_executable(tinto ${SOURCES})
-target_link_libraries( tinto ${X11_LIBRARIES}
+link_directories(${X11_LIBRARY_DIRS}
+  ${PANGOCAIRO_LIBRARY_DIRS}
+  ${PANGO_LIBRARY_DIRS}
+  ${CAIRO_LIBRARY_DIRS}
+  ${GLIB2_LIBRARY_DIRS}
+  ${GOBJECT2_LIBRARY_DIRS}
+  ${IMLIB2_LIBRARY_DIRS}
+  ${SN_LIBRARY_DIRS})
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES}
                              ${PANGOCAIRO_LIBRARIES}
                              ${PANGO_LIBRARIES}
                              ${CAIRO_LIBRARIES}
                              ${GLIB2_LIBRARIES}
                              ${GOBJECT2_LIBRARIES}
                              ${IMLIB2_LIBRARIES}
-			     ${SN_LIBRARIES} )
-if( RT_LIBRARY )
-  target_link_libraries( tinto ${RT_LIBRARY} )
-endif( RT_LIBRARY )
+			     ${SN_LIBRARIES})
+if(RT_LIBRARY)
+  target_link_libraries(${PROJECT_NAME} ${RT_LIBRARY})
+endif(RT_LIBRARY)
 
-add_dependencies( tinto version )
-set_target_properties( tinto PROPERTIES COMPILE_FLAGS "-Wall -pthread -std=c11 -g" )
-set_target_properties(tinto PROPERTIES LINK_FLAGS "-pthread" )
+check_function_exists(strlcat HAS_STRLCAT)
+check_function_exists(strlcpy HAS_STRLCPY)
+if (HAS_STRLCAT AND HAST_STRLCPY)
+  add_definitions(-DHAS_LESS_ERROR_PRONE_STR_FUNCS)
+endif(HAS_STRLCAT AND HAST_STRLCPY)
+remove_definitions(-DHAS_STRLCAT -DHAS_STRLCPY)
 
-install( TARGETS tinto DESTINATION bin )
-install( FILES sample/tint2rc DESTINATION ${SYSCONFDIR}/xdg/tinto )
-install( FILES default_icon.png DESTINATION ${DATADIR}/tinto )
-install( FILES AUTHORS ChangeLog README DESTINATION ${DOCDIR} )
-install( FILES doc/tint2.1 DESTINATION ${MANDIR}/man1 )
-if( ENABLE_EXAMPLES )
-  file( GLOB SAMPLEFILES sample/*.tint2rc )
-  install( FILES ${SAMPLEFILES} DESTINATION ${DOCDIR}/examples )
-endif( ENABLE_EXAMPLES )
+add_dependencies(${PROJECT_NAME} version)
+set(CMAKE_C_FLAGS "-std=c11 -O3")
+set(CMAKE_C_FLAGS_DEBUG  "-std=c11 -O0 -pedantic -Wall -g")
+
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "release")
+endif(NOT CMAKE_BUILD_TYPE)
+
+string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+if (${CMAKE_BUILD_TYPE} STREQUAL "debug")
+  set(CMAKE_C_COMPILER "clang")
+  add_definitions(-DDEVEL_MODE)
+  remove_definitions(-DNDEBUG)
+endif(${CMAKE_BUILD_TYPE} STREQUAL "debug")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-pthread")
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+install(FILES sample/tint2rc DESTINATION ${SYSCONFDIR}/xdg/${PROJECT_NAME})
+install(FILES default_icon.png DESTINATION ${DATADIR}/${PROJECT_NAME})
+install(FILES AUTHORS ChangeLog README DESTINATION ${DOCDIR})
+install(FILES doc/tint2.1 DESTINATION ${MANDIR}/man1)
+if(ENABLE_EXAMPLES)
+  file(GLOB SAMPLEFILES sample/*.conf)
+  install(FILES ${SAMPLEFILES} DESTINATION ${DOCDIR}/examples)
+endif(ENABLE_EXAMPLES)

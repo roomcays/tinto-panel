@@ -1,5 +1,30 @@
+#+STARTUP: nofold
+
 * Tinto Panel
 Tinto panel is fork of the Tint2 panel available at [[http://code.google.com/p/tint2/][Google Code]].
 
 
+*** Dependencies
+    To build tinto you need the development packages:
+    - cairo
+    - pango
+    - x11
+    - xcomposite
+    - xrender
+    - xinerama
+    - xrandr
+    - xdamage
+    - glib2
+    - startup-notification
+    - gobject2
+    - imlib2
 
+*** Install
+    To install tinto you need just to type this commands in your shell.
+#+BEGIN_SRC shell
+  %git clone https://github.com/eatg75/tinto-panel
+  %cd  tinto-panel
+  %cmake .
+  %make
+  %sudo make install
+#+END_SRC
