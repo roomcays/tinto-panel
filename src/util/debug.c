@@ -16,7 +16,7 @@
  */
 void util_log(int line, ...) {
   const time_t now = time(NULL);
-  if (now == (time_t)-1) return;
+  if (now == (time_t) - 1) return;
 
   struct tm* time = gmtime(&now);
   if (!time) return;

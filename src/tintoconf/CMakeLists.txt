@@ -1,4 +1,4 @@
-project(tint2conf)
+project(tintoconf)
 cmake_minimum_required(VERSION 2.6)
 
 include( FindPkgConfig )
@@ -28,8 +28,8 @@ link_directories( ${X11_T2C_LIBRARY_DIRS}
                   ${IMLIB2_LIBRARY_DIRS}
                   ${GTHREAD2_LIBRARY_DIRS}
                   ${GTK2_LIBRARY_DIRS} )
-add_executable( tint2conf ${SOURCES} )
-target_link_libraries( tint2conf ${X11_T2C_LIBRARIES}
+add_executable( tintoconf ${SOURCES} )
+target_link_libraries( tintoconf ${X11_T2C_LIBRARIES}
                                  ${GLIB2_LIBRARIES}
                                  ${GOBJECT2_LIBRARIES}
                                  ${IMLIB2_LIBRARIES}
@@ -41,10 +41,10 @@ if ( NOT DATADIR )
 endif( NOT DATADIR )
 
 add_definitions( -DINSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" )
-set_target_properties( tint2conf PROPERTIES COMPILE_FLAGS "-Wall -pthread" )
-set_target_properties( tint2conf PROPERTIES LINK_FLAGS "-pthread" )
+set_target_properties( tintoconf PROPERTIES COMPILE_FLAGS "-pthread" )
+set_target_properties( tintoconf PROPERTIES LINK_FLAGS "-pthread" )
 
-install( TARGETS tint2conf DESTINATION bin )
+install( TARGETS tintoconf DESTINATION bin )
 install( PROGRAMS tintwizard.py DESTINATION bin )
 install( FILES taskbar.svg DESTINATION ${DATADIR}/icons/hicolor/scalable/apps )
 install( FILES tint2conf.desktop DESTINATION ${DATADIR}/applications )

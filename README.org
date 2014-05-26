@@ -1,5 +1,45 @@
+#+STARTUP: nofold
+
 * Tinto Panel
 Tinto panel is fork of the Tint2 panel available at [[http://code.google.com/p/tint2/][Google Code]].
 
 
+*** Dependencies
+    To build tinto you need the development packages:
+    - cairo
+    - pango
+    - x11
+    - xcomposite
+    - xrender
+    - xinerama
+    - xrandr
+    - xdamage
+    - glib2
+    - startup-notification
+    - gobject2
+    - imlib2
 
+*** Install
+    To install tinto you need just to type this commands in your shell.
+#+BEGIN_SRC shell
+  % git clone https://github.com/eatg75/tinto-panel
+  % cd  tinto-panel
+  % cmake .
+  % make
+  % sudo make install
+#+END_SRC
+
+
+*** History
+    *Tinto Panel* is a fork of [[https://code.google.com/p/tint2/][tint2]] developed by:
+      - Thierry Lorthiois <lorthiois@bbsoft.fr> from Omega distribution
+      - Andreas Fink <andreas.fink85@googlemail.com>
+      - Euan Freeman <euan04@gmail.com> (tintwizard)
+      - Christian Ruppert <Spooky85@gmail.com> (autotools build system)
+
+    and *tint2* is based on [[http://code.google.com/p/ttm/][ttm]] developed by:
+      - 2007-2008 Pål Staurland <staura@gmail.com>
+
+
+*** License
+    *Tinto Panel* is released under  [[https://gnu.org/licenses/old-licenses/gpl-2.0.html][GNU General Public License]].
