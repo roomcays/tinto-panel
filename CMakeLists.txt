@@ -1,4 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "release")
+endif(NOT CMAKE_BUILD_TYPE)
+
+string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+if (${CMAKE_BUILD_TYPE} STREQUAL "debug")
+  set(CMAKE_C_COMPILER "clang")
+  add_definitions(-DDEVEL_MODE)
+  remove_definitions(-DNDEBUG)
+endif(${CMAKE_BUILD_TYPE} STREQUAL "debug")
+
 set(PROJECT_NAME "tinto")
 project(${PROJECT_NAME} C)
 
@@ -92,7 +103,7 @@ if(ENABLE_TINTOCONF)
   add_dependencies(tintoconf version)
 endif(ENABLE_TINTOCONF)
 
-add_custom_target(version ALL "${PROJECT_SOURCE_DIR}/get_svnrev.sh" "\"${PROJECT_SOURCE_DIR}\"")
+# add_custom_target(version ALL "${PROJECT_SOURCE_DIR}/get_svnrev.sh" "\"${PROJECT_SOURCE_DIR}\"")
 
 link_directories(${X11_LIBRARY_DIRS}
   ${PANGOCAIRO_LIBRARY_DIRS}
@@ -127,18 +138,20 @@ add_dependencies(${PROJECT_NAME} version)
 set(CMAKE_C_FLAGS "-std=c11 -O3")
 set(CMAKE_C_FLAGS_DEBUG  "-std=c11 -O0 -pedantic -Wall -g")
 
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "release")
-endif(NOT CMAKE_BUILD_TYPE)
+# if (NOT CMAKE_BUILD_TYPE)
+#   set(CMAKE_BUILD_TYPE "release")
+# endif(NOT CMAKE_BUILD_TYPE)
 
-string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
-if (${CMAKE_BUILD_TYPE} STREQUAL "debug")
-  set(CMAKE_C_COMPILER "clang")
-  add_definitions(-DDEVEL_MODE)
-  remove_definitions(-DNDEBUG)
-endif(${CMAKE_BUILD_TYPE} STREQUAL "debug")
+# string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+# if (${CMAKE_BUILD_TYPE} STREQUAL "debug")
+#   set(CMAKE_C_COMPILER "clang")
+#   add_definitions(-DDEVEL_MODE)
+#   remove_definitions(-DNDEBUG)
+# endif(${CMAKE_BUILD_TYPE} STREQUAL "debug")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-pthread")
+# set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-pthread")
+set(CMAKE_EXE_LINKER_FLAGS "-pthread")
+#message(${LINK_FLAGS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES sample/tint2rc DESTINATION ${SYSCONFDIR}/xdg/${PROJECT_NAME})

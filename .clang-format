@@ -1,0 +1,110 @@
+# -*-yaml-*-
+# The style this one is based upon.
+BasedOnStyle: Google
+
+# Offset for construct such as : public, private and protected.
+AccessModifierOffset: -2
+
+# Do not align escaped new lines to left instead of right.
+# This feature is useful in macros definitions.
+AlignEscapedNewlinesLeft: true
+
+AlignTrailingComments: false
+
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# Format one line block statements into one line.
+# AllowShortBlocksOnASingleLine: true !ukn
+
+# Format one line function into a single line.
+AllowShortFunctionsOnASingleLine: true
+
+# Format one line if statement into one line.
+# AllowShortIfStatementsOnASingleLine: true??
+
+# Format one line loop into a single line.
+# AllowShortLoopsOnASingleLine: true??
+
+#
+# AllowShortLoopsOnASingleLine: false??
+
+# AlwaysBreakBeforeMultilineStrings: true ??
+
+
+# AlwaysBreakTemplateDeclarations: true ??
+
+# BinPackParameters: true ??
+
+# BreakBeforeBinaryOperators: bool ?
+
+
+# BreakBeforeBraces: {Attach, GNU, Linux, Stroustrup}
+
+
+
+# BreakBeforeTernaryOperators: bool
+
+# BreakConstructorInitializersBeforeComma: bool
+
+# Line length.
+ColumnLimit: 80
+
+# ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+
+# ConstructorInitializerIndentWidth: 8
+
+# ContinuationIndentWidth: 8
+
+# Cpp11BracedListStyle: false
+
+# Use my bindinging rule.
+DerivePointerBinding: false
+
+# ForEachMacros: true
+
+# Indent case labels in the same column as the switch construct.
+IndentCaseLabels: false
+
+# IndentFunctionDeclarationAfterType: false?
+
+# Indentatin offset.
+IndentWidth: 2
+
+# KeepEmptyLinesAtTheStartOfBlocks: false
+
+Language: Cpp
+
+
+MaxEmptyLinesToKeep: 1
+
+NamespaceIndentation: All
+
+ObjCSpaceAfterProperty: true
+
+ObjCSpaceBeforeProtocolList: false
+
+PointerBindsToType: true
+
+SpaceBeforeAssignmentOperators: true
+
+SpaceBeforeParens: ControlStatements
+
+SpaceInEmptyParentheses: false
+
+SpacesBeforeTrailingComments: 2
+
+SpacesInAngles: false
+
+SpacesInCStyleCastParentheses: false
+
+#SpacesInContainerLiterals: true
+
+SpacesInParentheses: false
+
+Standard: Auto
+
+TabWidth: 2
+
+UseTab: Never
+# ----

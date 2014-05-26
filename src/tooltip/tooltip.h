@@ -12,7 +12,8 @@
 * GNU General Public License for more details.
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+*USA.
 **************************************************************************/
 
 #ifndef TOOLTIP_H
@@ -22,25 +23,24 @@
 #include "panel.h"
 #include "timer.h"
 
-
 typedef struct {
-	Area* area;    // never ever use the area attribut if you are not 100% sure that this area was not freed
-	char* tooltip_text;
-	Panel* panel;
-	Window window;
-	int show_timeout_msec;
-	int hide_timeout_msec;
-	Bool mapped;
-	int paddingx;
-	int paddingy;
-	PangoFontDescription* font_desc;
-	Color font_color;
-	Background* bg;
-	timeout* timeout;
+  Area* area;  // never ever use the area attribut if you are not 100% sure that
+               // this area was not freed
+  char* tooltip_text;
+  Panel* panel;
+  Window window;
+  int show_timeout_msec;
+  int hide_timeout_msec;
+  Bool mapped;
+  int paddingx;
+  int paddingy;
+  PangoFontDescription* font_desc;
+  Color font_color;
+  Background* bg;
+  timeout* timeout;
 } Tooltip;
 
 extern Tooltip g_tooltip;
-
 
 // default global data
 void default_tooltip();
@@ -49,11 +49,11 @@ void default_tooltip();
 void cleanup_tooltip();
 
 void init_tooltip();
-void tooltip_trigger_show(Area* area, Panel* p, XEvent *e);
+void tooltip_trigger_show(Area* area, Panel* p, XEvent* e);
 void tooltip_show(void* /*arg*/);
 void tooltip_update();
 void tooltip_trigger_hide();
 void tooltip_hide(void* /*arg*/);
 void tooltip_copy_text(Area* area);
 
-#endif // TOOLTIP_H
+#endif  // TOOLTIP_H
