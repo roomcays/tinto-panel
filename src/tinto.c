@@ -38,7 +38,6 @@
 #include <sys/wait.h>
 #endif
 
-#include <version.h>
 #include "server.h"
 #include "window.h"
 #include "config.h"

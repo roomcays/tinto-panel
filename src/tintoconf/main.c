@@ -19,9 +19,6 @@
 *USA.
 **************************************************************************/
 
-#ifdef HAVE_VERSION_H
-#include "version.h"
-#endif
 #include "main.h"
 #include "common.h"
 #include "theme_view.h"
