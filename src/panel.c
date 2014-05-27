@@ -312,11 +312,11 @@ int resize_panel(void* obj) {
   // printf("resize_panel\n");
   if (panel_mode != MULTI_DESKTOP && taskbar_enabled) {
     // propagate width/height on hidden taskbar
-    int i, width, height;
+    int width, height;
     Panel* panel = (Panel*)obj;
     width = panel->taskbar[server.desktop].area.width;
     height = panel->taskbar[server.desktop].area.height;
-    for (i = 0; i < panel->nb_desktop; i++) {
+    for (uint8_t i = 0; i < panel->desktop_count; ++i) {
       panel->taskbar[i].area.width = width;
       panel->taskbar[i].area.height = height;
       panel->taskbar[i].area.resize = 1;
@@ -382,7 +382,7 @@ void update_strut(Panel* p) {
 }
 
 void set_panel_items_order(Panel* p) {
-  int k, j;
+  int k;
 
   if (p->area.list) {
     g_slist_free(p->area.list);
@@ -393,7 +393,7 @@ void set_panel_items_order(Panel* p) {
     if (panel_items_order[k] == 'L')
       p->area.list = g_slist_append(p->area.list, &p->launcher);
     if (panel_items_order[k] == 'T') {
-      for (j = 0; j < p->nb_desktop; j++)
+      for (uint8_t j = 0; j < p->desktop_count; ++j)
         p->area.list = g_slist_append(p->area.list, &p->taskbar[j]);
     }
 #ifdef ENABLE_BATTERY
@@ -544,9 +544,9 @@ void set_panel_background(Panel* p) {
   }
 
   // reset task/taskbar 'state_pix'
-  int i, k;
+  int k;
   Taskbar* tskbar;
-  for (i = 0; i < p->nb_desktop; i++) {
+  for (uint8_t i = 0; i < p->desktop_count; ++i) {
     tskbar = &p->taskbar[i];
     for (k = 0; k < TASKBAR_STATE_COUNT; ++k) {
       if (tskbar->state_pix[k]) XFreePixmap(server.dsp, tskbar->state_pix[k]);
@@ -576,17 +576,16 @@ Panel* get_panel(Window win) {
 
 Taskbar* click_taskbar(Panel* panel, point_T point) {
   Taskbar* tskbar;
-  int i;
 
   if (panel_horizontal) {
-    for (i = 0; i < panel->nb_desktop; i++) {
+    for (uint8_t i = 0; i < panel->desktop_count; ++i) {
       tskbar = &panel->taskbar[i];
       if (tskbar->area.on_screen && point.x >= tskbar->area.posx &&
           point.x <= (tskbar->area.posx + tskbar->area.width))
         return tskbar;
     }
   } else {
-    for (i = 0; i < panel->nb_desktop; i++) {
+    for (uint8_t i = 0; i < panel->desktop_count; ++i) {
       tskbar = &panel->taskbar[i];
       if (tskbar->area.on_screen && point.y >= tskbar->area.posy &&
           point.y <= (tskbar->area.posy + tskbar->area.height))

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <glib.h>
 #include <Imlib2.h>
+#include <stdint.h>
 
 #include "task.h"
 #include "taskbar.h"
@@ -64,14 +65,14 @@ void default_taskbar() {
 void cleanup_taskbar() {
   Panel* panel;
   Taskbar* tskbar;
-  int i, j, k;
+  int i, k;
 
   cleanup_taskbarname();
   if (win_to_task_table)
     g_hash_table_foreach(win_to_task_table, taskbar_remove_task, 0);
   for (i = 0; i < nb_panel; i++) {
     panel = &panel1[i];
-    for (j = 0; j < panel->nb_desktop; j++) {
+    for (uint8_t j = 0; j < panel->desktop_count; ++j) {
       tskbar = &panel->taskbar[j];
       for (k = 0; k < TASKBAR_STATE_COUNT; ++k) {
         if (tskbar->state_pix[k]) XFreePixmap(server.dsp, tskbar->state_pix[k]);
@@ -266,9 +267,9 @@ void init_taskbar_panel(void* p) {
   // panel->g_task.maximum_width);
 
   Taskbar* tskbar;
-  panel->nb_desktop = server.nb_desktop;
+  panel->desktop_count = (uint8_t)server.nb_desktop;
   panel->taskbar = calloc(server.nb_desktop, sizeof(Taskbar));
-  for (j = 0; j < panel->nb_desktop; j++) {
+  for (uint8_t j = 0; j < panel->desktop_count; ++j) {
     tskbar = &panel->taskbar[j];
     memcpy(&tskbar->area, &panel->g_taskbar.area, sizeof(Area));
     tskbar->desktop = j;
@@ -404,10 +405,9 @@ void set_taskbar_state(Taskbar* tskbar, int state) {
 
 void visible_taskbar(void* p) {
   Panel* panel = (Panel*)p;
-  int j;
 
   Taskbar* taskbar;
-  for (j = 0; j < panel->nb_desktop; j++) {
+  for (uint8_t j = 0; j < panel->desktop_count; ++j) {
     taskbar = &panel->taskbar[j];
     if (panel_mode != MULTI_DESKTOP && taskbar->desktop != server.desktop) {
       // SINGLE_DESKTOP and not current desktop

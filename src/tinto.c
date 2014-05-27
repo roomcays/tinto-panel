@@ -547,11 +547,11 @@ void event_property_notify(XEvent* e) {
     else if (at == server.atom._NET_DESKTOP_NAMES) {
       if (!taskbarname_enabled) return;
       GSList* l, *list = server_get_name_of_desktop();
-      int j;
       gchar* name;
       Taskbar* tskbar;
       for (i = 0; i < nb_panel; i++) {
-        for (j = 0, l = list; j < panel1[i].nb_desktop; j++) {
+        l = list;
+        for (uint8_t j = 0; j < panel1[i].desktop_count; j++) {
           if (l) {
             name = g_strdup(l->data);
             l = l->next;

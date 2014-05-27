@@ -82,8 +82,8 @@ Task* add_task(Window win) {
   GPtrArray* task_group = g_ptr_array_new();
   Taskbar* tskbar;
   Task* new_tsk2 = 0;
-  int j;
-  for (j = 0; j < panel1[monitor].nb_desktop; j++) {
+
+  for (uint8_t j = 0; j < panel1[monitor].desktop_count; j++) {
     if (new_tsk.desktop != ALLDESKTOP && new_tsk.desktop != j) continue;
 
     tskbar = &panel1[monitor].taskbar[j];

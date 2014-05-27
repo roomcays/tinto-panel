@@ -14,6 +14,7 @@
 #include <pango/pangocairo.h>
 #include <sys/time.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "common.h"
 #include "clock.h"
@@ -89,7 +90,8 @@ typedef struct {
   // taskbar[i] is used to loop over taskbar,
   // while panel->area.list is used to loop over all panel's objects
   Taskbar* taskbar;
-  int nb_desktop;
+  uint8_t desktop_count;
+
   Clock clock;
 #ifdef ENABLE_BATTERY
   Battery battery;

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <glib.h>
 #include <Imlib2.h>
+#include <stdint.h>
 
 #include "window.h"
 #include "panel.h"
@@ -47,12 +48,12 @@ void default_taskbarname() {
 void init_taskbarname_panel(void* p) {
   Panel* panel = (Panel*)p;
   Taskbar* tskbar;
-  int j;
 
   if (!taskbarname_enabled) return;
 
   GSList* l, *list = server_get_name_of_desktop();
-  for (j = 0, l = list; j < panel->nb_desktop; j++) {
+  l = list;
+  for (uint8_t j = 0; j < panel->desktop_count; ++j) {
     tskbar = &panel->taskbar[j];
     memcpy(&tskbar->bar_name.area, &panel->g_taskbar.area_name, sizeof(Area));
     tskbar->bar_name.area.parent = tskbar;
@@ -79,13 +80,13 @@ void init_taskbarname_panel(void* p) {
 }
 
 void cleanup_taskbarname() {
-  int i, j, k;
+  int i, k;
   Panel* panel;
   Taskbar* tskbar;
 
   for (i = 0; i < nb_panel; i++) {
     panel = &panel1[i];
-    for (j = 0; j < panel->nb_desktop; j++) {
+    for (uint8_t j = 0; j < panel->desktop_count; ++j) {
       tskbar = &panel->taskbar[j];
       if (tskbar->bar_name.name) g_free(tskbar->bar_name.name);
       free_area(&tskbar->bar_name.area);
