@@ -339,3 +339,19 @@ void render_image(Drawable d, int x, int y, int w, int h) {
   XRenderFreePicture(server.dsp, pict_image);
   XRenderFreePicture(server.dsp, pict_drawable);
 }
+
+/// \brief Create a new margin_T object with the same values for left and right,
+/// and same values for top and bottom.
+inline margin_T margin_create(int horizon, int vert) {
+  margin_T marg;
+  marg.left = marg.right = horizon >> 1;
+  marg.top = marg.bottom = vert >> 1;
+
+  return marg;
+}
+
+/// \brief Return the horizontal margin of a margin object
+inline int margin_horizontal(const margin_T* m) { return m->left + m->right; }
+
+/// \brief Return the vertical margin of a margin object.
+inline int margin_vertical(const margin_T* m) { return m->top + m->bottom; }

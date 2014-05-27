@@ -210,8 +210,8 @@ void add_entry(char* key, char* value) {
     }
   } else if (strcmp(key, "panel_margin") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    panel_config.marginx = atoi(value1);
-    if (value2) panel_config.marginy = atoi(value2);
+    if (value2) panel_config.margin = margin_create(atoi(value1), atoi(value2));
+    else panel_config.margin = margin_create(atoi(value1), 0);
   } else if (strcmp(key, "panel_padding") == 0) {
     extract_values(value, &value1, &value2, &value3);
     panel_config.area.paddingxlr = panel_config.area.paddingx = atoi(value1);

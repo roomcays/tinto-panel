@@ -16,21 +16,31 @@ typedef struct {
   int y;
 } point_T;
 
-/*
-void fxfree(void** ptr){
-  if(*ptr){
-    free(*ptr);
-    *ptr=NULL;
-    }
-  }
-FXint fxmalloc(void** ptr,unsigned long size){
-  *ptr=NULL;
-  if(size!=0){
-    if((*ptr=malloc(size))==NULL) return FALSE;
-    }
-  return TRUE;
-  }
-*/
+typedef struct {
+  int width;
+  int height;
+} dimension_T;
+
+
+typedef struct {
+  int bottom;
+  int left;
+  int top;
+  int right;
+} margin_T;
+
+/// \brief Create a new margin_T object with the same values for left and right,
+/// and same values for top and bottom.
+margin_T margin_create(int horizon, int vert);
+
+/// \brief Return the horizontal margin of a margin object
+int margin_horizontal(const margin_T* m);
+
+/// \brief Return the vertical margin of a margin object.
+int margin_vertical(const margin_T* m);
+
+
+
 
 // mouse actions
 enum {

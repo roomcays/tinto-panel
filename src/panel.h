@@ -75,16 +75,14 @@ typedef struct {
   Window main_win;
   Pixmap temp_pmap;
   point_T location;  // Position relative to root window.
-  int marginx, marginy;
+  margin_T margin;
   int pourcentx, pourcenty;
   // location of the panel (monitor number)
   int monitor;
-
   // --------------------------------------------------
   // task and taskbar parameter per panel
   Global_taskbar g_taskbar;
   Global_task g_task;
-
   // --------------------------------------------------
   // taskbar point to the first taskbar in panel.area.list.
   // number of tasbar == nb_desktop. taskbar[i] is for desktop(i).
@@ -96,11 +94,10 @@ typedef struct {
 #ifdef ENABLE_BATTERY
   Battery battery;
 #endif
-
   Launcher launcher;
   // autohide
-  int is_hidden;
-  int hidden_width, hidden_height;
+  bool hidden; // Tell if panel is hidden or not.
+  dimension_T hidden_dimen;
   Pixmap hidden_pixmap;
   timeout* autohide_timeout;
 } Panel;

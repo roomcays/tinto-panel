@@ -471,7 +471,7 @@ gboolean add_icon(Window id) {
 
   // show the window
   if (!traywin->hide) XMapWindow(server.dsp, traywin->tray_id);
-  if (!traywin->hide && !panel->is_hidden) XMapRaised(server.dsp, traywin->id);
+  if (!traywin->hide && !panel->hidden) XMapRaised(server.dsp, traywin->id);
 
   // changed in systray
   systray.area.resize = 1;

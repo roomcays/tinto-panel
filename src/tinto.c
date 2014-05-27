@@ -1047,9 +1047,9 @@ start:
       for (i = 0; i < nb_panel; i++) {
         panel = &panel1[i];
 
-        if (panel->is_hidden) {
+        if (panel->hidden) {
           XCopyArea(server.dsp, panel->hidden_pixmap, panel->main_win,
-                    server.gc, 0, 0, panel->hidden_width, panel->hidden_height,
+                    server.gc, 0, 0, panel->hidden_dimen.width, panel->hidden_dimen.height,
                     0, 0);
           XSetWindowBackgroundPixmap(server.dsp, panel->main_win,
                                      panel->hidden_pixmap);
@@ -1066,7 +1066,7 @@ start:
       XFlush(server.dsp);
 
       panel = (Panel*)systray.area.panel;
-      if (refresh_systray && panel && !panel->is_hidden) {
+      if (refresh_systray && panel && !panel->hidden) {
         refresh_systray = 0;
         // tint2 doen't draw systray icons. it just redraw background.
         XSetWindowBackgroundPixmap(server.dsp, panel->main_win,
@@ -1100,7 +1100,7 @@ start:
             autohide_trigger_show(panel);
           else if (e.type == LeaveNotify)
             autohide_trigger_hide(panel);
-          if (panel->is_hidden) {
+          if (panel->hidden) {
             if (e.type == ClientMessage &&
                 e.xclient.message_type == server.atom.XdndPosition) {
               hidden_dnd = 1;

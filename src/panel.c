@@ -229,9 +229,9 @@ void init_panel_size_and_position(Panel* panel) {
           server.monitor[panel->monitor].height * panel->area.height / 100.0F;
     }
 
-    if (panel->area.width + panel->marginx >
+    if (panel->area.width + margin_horizontal(&panel->margin) >
         server.monitor[panel->monitor].width) {
-      panel->area.width = server.monitor[panel->monitor].width - panel->marginx;
+      panel->area.width = server.monitor[panel->monitor].width - margin_horizontal(&panel->margin);
     }
 
     if (panel->area.bg->border.rounded > panel->area.height >> 1) {
@@ -242,7 +242,9 @@ void init_panel_size_and_position(Panel* panel) {
     }
   } else {
     SWAP_INTEGER(panel->area.height, panel->area.width);
-    SWAP_INTEGER(panel->marginy, panel->marginx);
+    SWAP_INTEGER(panel->margin.top, panel->margin.left);
+    SWAP_INTEGER(panel->margin.bottom, panel->margin.right);
+
     if (panel->pourcentx) {
       panel->area.height =
           server.monitor[panel->monitor].height * panel->area.height / 100.0F;
@@ -253,10 +255,10 @@ void init_panel_size_and_position(Panel* panel) {
           server.monitor[panel->monitor].width * panel->area.width / 100.0F;
     }
 
-    if (panel->area.height + panel->marginy >
+    if (panel->area.height + margin_vertical(&panel->margin) >
         server.monitor[panel->monitor].height) {
       panel->area.height =
-          server.monitor[panel->monitor].height - panel->marginy;
+        server.monitor[panel->monitor].height - margin_vertical(&panel->margin);
     }
 
     if (panel->area.bg->border.rounded > panel->area.width >> 1) {
@@ -269,38 +271,38 @@ void init_panel_size_and_position(Panel* panel) {
 
   // Horizontal contraints (LEFT, RIGHT and CENTER).
   if (panel_position & LEFT) {
-    panel->location.x = server.monitor[panel->monitor].x + (panel->marginx >> 1);
+    panel->location.x = server.monitor[panel->monitor].x + panel->margin.left;
   } else if (panel_position & RIGHT) {
     panel->location.x = server.monitor[panel->monitor].x +
                   server.monitor[panel->monitor].width - panel->area.width -
-                  (panel->marginx >> 1);
+      panel->margin.right;
   } else {
     if (panel_horizontal)
       panel->location.x =
           server.monitor[panel->monitor].x +
           (server.monitor[panel->monitor].width - panel->area.width) / 2;
     else
-      panel->location.x = server.monitor[panel->monitor].x + panel->marginx;
+      panel->location.x = server.monitor[panel->monitor].x + margin_horizontal(&panel->margin);
   }
 
   // Vertical constraints (TOP and LEFT).
   if (panel_position & TOP) {
-    panel->location.y = server.monitor[panel->monitor].y + panel->marginy;
+    panel->location.y = server.monitor[panel->monitor].y + margin_vertical(&panel->margin);
   } else {
     panel->location.y = server.monitor[panel->monitor].y +
-                  server.monitor[panel->monitor].height - panel->area.height -
-                  panel->marginy;
+      server.monitor[panel->monitor].height - panel->area.height -
+      margin_vertical(&panel->margin);
   }
 
   // autohide or strut_policy=minimum
   int diff = (panel_horizontal ? panel->area.height : panel->area.width) -
              panel_autohide_height;
   if (panel_horizontal) {
-    panel->hidden_width = panel->area.width;
-    panel->hidden_height = panel->area.height - diff;
+    panel->hidden_dimen.width = panel->area.width;
+    panel->hidden_dimen.height = panel->area.height - diff;
   } else {
-    panel->hidden_width = panel->area.width - diff;
-    panel->hidden_height = panel->area.height;
+    panel->hidden_dimen.width = panel->area.width - diff;
+    panel->hidden_dimen.height = panel->area.height;
   }
 }
 
@@ -339,10 +341,10 @@ void update_strut(Panel* p) {
   Monitor monitor = server.monitor[p->monitor];
   long struts[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   if (panel_horizontal) {
-    int height = p->area.height + p->marginy;
+    int height = p->area.height + margin_vertical(&p->margin);
     if (panel_strut_policy == STRUT_MINIMUM ||
-        (panel_strut_policy == STRUT_FOLLOW_SIZE && p->is_hidden))
-      height = p->hidden_height;
+        (panel_strut_policy == STRUT_FOLLOW_SIZE && p->hidden))
+      height = p->hidden_dimen.height;
     if (panel_position & TOP) {
       struts[2] = height + monitor.y;
       struts[8] = p->location.x;
@@ -355,10 +357,10 @@ void update_strut(Panel* p) {
       struts[11] = p->location.x + p->area.width - 1;
     }
   } else {
-    int width = p->area.width + p->marginx;
+    int width = p->area.width + margin_horizontal(&p->margin);
     if (panel_strut_policy == STRUT_MINIMUM ||
-        (panel_strut_policy == STRUT_FOLLOW_SIZE && p->is_hidden))
-      width = p->hidden_width;
+        (panel_strut_policy == STRUT_FOLLOW_SIZE && p->hidden))
+      width = p->hidden_dimen.width;
     if (panel_position & LEFT) {
       struts[0] = width + monitor.x;
       struts[4] = p->location.y;
@@ -467,8 +469,8 @@ void set_panel_properties(Panel* p) {
 
   // Fixed position and non-resizable window
   // Allow panel move and resize when tint2 reload config file
-  int minwidth = panel_autohide ? p->hidden_width : p->area.width;
-  int minheight = panel_autohide ? p->hidden_height : p->area.height;
+  int minwidth = panel_autohide ? p->hidden_dimen.width : p->area.width;
+  int minheight = panel_autohide ? p->hidden_dimen.height : p->area.height;
   XSizeHints size_hints;
   size_hints.flags = PPosition | PMinSize | PMaxSize;
   size_hints.min_width = minwidth;
@@ -492,9 +494,9 @@ void set_panel_background(Panel* p) {
 
   int xoff = 0, yoff = 0;
   if (panel_horizontal && panel_position & BOTTOM)
-    yoff = p->area.height - p->hidden_height;
+    yoff = p->area.height - p->hidden_dimen.height;
   else if (!panel_horizontal && panel_position & RIGHT)
-    xoff = p->area.width - p->hidden_width;
+    xoff = p->area.width - p->hidden_dimen.width;
 
   if (server.real_transparency) {
     clear_pixmap(p->area.pix, 0, 0, p->area.width, p->area.height);
@@ -505,7 +507,7 @@ void set_panel_background(Panel* p) {
     int x = 0, y = 0;
     XTranslateCoordinates(server.dsp, p->main_win, server.root_win, 0, 0, &x,
                           &y, &dummy);
-    if (panel_autohide && p->is_hidden) {
+    if (panel_autohide && p->hidden) {
       x -= xoff;
       y -= yoff;
     }
@@ -527,10 +529,10 @@ void set_panel_background(Panel* p) {
   if (panel_autohide) {
     if (p->hidden_pixmap) XFreePixmap(server.dsp, p->hidden_pixmap);
     p->hidden_pixmap =
-        XCreatePixmap(server.dsp, server.root_win, p->hidden_width,
-                      p->hidden_height, server.depth);
+        XCreatePixmap(server.dsp, server.root_win, p->hidden_dimen.width,
+                      p->hidden_dimen.height, server.depth);
     XCopyArea(server.dsp, p->area.pix, p->hidden_pixmap, server.gc, xoff, yoff,
-              p->hidden_width, p->hidden_height, 0, 0);
+              p->hidden_dimen.width, p->hidden_dimen.height, 0, 0);
   }
 
   // redraw panel's object
@@ -722,7 +724,7 @@ void stop_autohide_timeout(Panel* p) {
 void autohide_show(void* p) {
   Panel* panel = (Panel*)p;
   stop_autohide_timeout(panel);
-  panel->is_hidden = 0;
+  panel->hidden = false;
   if (panel_strut_policy == STRUT_FOLLOW_SIZE) update_strut(p);
 
   XMapSubwindows(server.dsp, panel->main_win);  // systray windows
@@ -751,7 +753,7 @@ void autohide_show(void* p) {
 void autohide_hide(void* p) {
   Panel* panel = (Panel*)p;
   stop_autohide_timeout(panel);
-  panel->is_hidden = 1;
+  panel->hidden = true;
   if (panel_strut_policy == STRUT_FOLLOW_SIZE) update_strut(p);
 
   XUnmapSubwindows(server.dsp, panel->main_win);  // systray windows
@@ -760,20 +762,20 @@ void autohide_hide(void* p) {
 
   if (panel_horizontal) {
     if (panel_position & TOP) {
-      XResizeWindow(server.dsp, panel->main_win, panel->hidden_width,
-                    panel->hidden_height);
+      XResizeWindow(server.dsp, panel->main_win, panel->hidden_dimen.width,
+                    panel->hidden_dimen.height);
     } else {
       XMoveResizeWindow(server.dsp, panel->main_win, panel->location.x,
-                        panel->location.y + diff, panel->hidden_width,
-                        panel->hidden_height);
+                        panel->location.y + diff, panel->hidden_dimen.width,
+                        panel->hidden_dimen.height);
     }
   } else {
     if (panel_position & LEFT) {
-      XResizeWindow(server.dsp, panel->main_win, panel->hidden_width,
-                    panel->hidden_height);
+      XResizeWindow(server.dsp, panel->main_win, panel->hidden_dimen.width,
+                    panel->hidden_dimen.height);
     } else {
       XMoveResizeWindow(server.dsp, panel->main_win, panel->location.x + diff,
-                        panel->location.y, panel->hidden_width, panel->hidden_height);
+                        panel->location.y, panel->hidden_dimen.width, panel->hidden_dimen.height);
     }
   }
   panel_refresh = 1;
