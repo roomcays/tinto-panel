@@ -38,10 +38,10 @@ typedef struct _timeout timeout;
 **/
 
 /** default global data **/
-void default_timeout();
+void default_timeout(void);
 
 /** freed memory : stops all timeouts **/
-void cleanup_timeout();
+void cleanup_timeout(void);
 
 /** installs a timeout with the first timeout of 'value_msec' and then a
 *periodic timeout with
@@ -61,9 +61,9 @@ void stop_timeout(timeout* t);
 
 /** update_next_timeout updates next_timeout to the value, when the next
  * installed timeout will expire **/
-void update_next_timeout();
+void update_next_timeout(void);
 
 /** Callback of all expired timeouts **/
-void callback_timeout_expired();
+void callback_timeout_expired(void);
 
 #endif  // TIMER_H

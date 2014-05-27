@@ -70,17 +70,11 @@ extern Imlib_Image default_icon;
 
 // tint2 use one panel per monitor and one taskbar per desktop.
 typedef struct {
-  // always start with area
   // area.list own all objects of the panel according to config file
   Area area;
-
-  // --------------------------------------------------
-  // panel
   Window main_win;
   Pixmap temp_pmap;
-
-  // position relative to root window
-  int posx, posy;
+  point_T location;  // Position relative to root window.
   int marginx, marginy;
   int pourcentx, pourcenty;
   // location of the panel (monitor number)
@@ -98,19 +92,12 @@ typedef struct {
   // while panel->area.list is used to loop over all panel's objects
   Taskbar* taskbar;
   int nb_desktop;
-
-  // --------------------------------------------------
-  // clock
   Clock clock;
-
-// --------------------------------------------------
-// battery
 #ifdef ENABLE_BATTERY
   Battery battery;
 #endif
 
   Launcher launcher;
-
   // autohide
   int is_hidden;
   int hidden_width, hidden_height;

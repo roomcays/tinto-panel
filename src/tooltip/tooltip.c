@@ -128,13 +128,13 @@ void tooltip_update_geometry() {
 
   Panel* panel = g_tooltip.panel;
   if (panel_horizontal && panel_position & BOTTOM)
-    y = panel->posy - height;
+    y = panel->location.y - height;
   else if (panel_horizontal && panel_position & TOP)
-    y = panel->posy + panel->area.height;
+    y = panel->location.y + panel->area.height;
   else if (panel_position & LEFT)
-    x = panel->posx + panel->area.width;
+    x = panel->location.x + panel->area.width;
   else
-    x = panel->posx - width;
+    x = panel->location.x - width;
 
   g_object_unref(layout);
   cairo_destroy(c);

@@ -63,12 +63,12 @@ void callback_multi_timeout(void* mth);
 void remove_from_multi_timeout(timeout* t);
 void stop_multi_timeout(timeout* t);
 
-void default_timeout() {
-  timeout_list = 0;
-  multi_timeouts = 0;
+void default_timeout(void) {
+  timeout_list = NULL;
+  multi_timeouts = NULL;
 }
 
-void cleanup_timeout() {
+void cleanup_timeout(void) {
   while (timeout_list) {
     timeout* t = timeout_list->data;
     if (t->multi_timeout) stop_multi_timeout(t);
