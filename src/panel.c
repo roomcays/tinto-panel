@@ -40,6 +40,7 @@
 int signal_pending;
 // --------------------------------------------------
 // mouse events
+int mouse_left;
 int mouse_middle;
 int mouse_right;
 int mouse_scroll_up;
