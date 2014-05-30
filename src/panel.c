@@ -382,30 +382,30 @@ void update_strut(Panel* p) {
 }
 
 void set_panel_items_order(Panel* p) {
-  int k;
+//  int k;
 
   if (p->area.list) {
     g_slist_free(p->area.list);
     p->area.list = NULL;
   }
 
-  for (k = 0; k < strlen(panel_items_order); k++) {
+  for (size_t k = 0, len = strlen(panel_items_order); k < len; ++k) {
     if (panel_items_order[k] == 'L')
       p->area.list = g_slist_append(p->area.list, &p->launcher);
-    if (panel_items_order[k] == 'T') {
+    else if (panel_items_order[k] == 'T') {
       for (uint8_t j = 0; j < p->desktop_count; ++j)
         p->area.list = g_slist_append(p->area.list, &p->taskbar[j]);
     }
 #ifdef ENABLE_BATTERY
-    if (panel_items_order[k] == 'B')
+    else if (panel_items_order[k] == 'B')
       p->area.list = g_slist_append(p->area.list, &p->battery);
 #endif
-    if (panel_items_order[k] == 'S' && p == panel1) {
+    else if (panel_items_order[k] == 'S' && p == panel1) {
       // TODO : check systray is only on 1 panel
       // at the moment only on panel1[0] allowed
       p->area.list = g_slist_append(p->area.list, &systray);
     }
-    if (panel_items_order[k] == 'C')
+    else if (panel_items_order[k] == 'C')
       p->area.list = g_slist_append(p->area.list, &p->clock);
   }
   init_rendering(&p->area, 0);
@@ -468,7 +468,7 @@ void set_panel_properties(Panel* p) {
   update_strut(p);
 
   // Fixed position and non-resizable window
-  // Allow panel move and resize when tint2 reload config file
+  // Allow panel move and resize when tinto reload config file
   int minwidth = panel_autohide ? p->hidden_dimen.width : p->area.width;
   int minheight = panel_autohide ? p->hidden_dimen.height : p->area.height;
   XSizeHints size_hints;

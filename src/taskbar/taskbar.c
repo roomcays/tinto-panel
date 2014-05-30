@@ -1,7 +1,5 @@
 /**************************************************************************
 *
-* Tint2 : taskbar
-*
 * Copyright (C) 2008 thierry lorthiois (lorthiois@bbsoft.fr) from Omega
 *distribution
 *
@@ -29,6 +27,8 @@
 #include <Imlib2.h>
 #include <stdint.h>
 
+#include "color.h"
+#include "debug.h"
 #include "task.h"
 #include "taskbar.h"
 #include "server.h"
@@ -189,7 +189,7 @@ void init_taskbar_panel(void* p) {
         panel->g_task.brightness[TASK_ACTIVE];
   }
   if ((panel->g_task.config_font_mask & (1 << TASK_NORMAL)) == 0)
-    panel->g_task.font[TASK_NORMAL] = (Color) {{0, 0, 0}, 0};
+    panel->g_task.font[TASK_NORMAL] = color_create("#0000");
   if ((panel->g_task.config_font_mask & (1 << TASK_ACTIVE)) == 0)
     panel->g_task.font[TASK_ACTIVE] = panel->g_task.font[TASK_NORMAL];
   if ((panel->g_task.config_font_mask & (1 << TASK_ICONIFIED)) == 0)
@@ -233,7 +233,7 @@ void init_taskbar_panel(void* p) {
         panel->g_task.area.height / 2) {
       printf(
           "task%sbackground_id has a too large rounded value. Please fix your "
-          "tint2rc\n",
+          "tinto.conf\n",
           j == 0 ? "_" : j == 1 ? "_active_" : j == 2 ? "_iconified_"
                                                       : "_urgent_");
       g_array_append_val(backgrounds, *panel->g_task.background[j]);
@@ -282,6 +282,9 @@ void init_taskbar_panel(void* p) {
 }
 
 void taskbar_remove_task(gpointer key, gpointer value, gpointer user_data) {
+  UNUSED(value);
+  UNUSED(user_data);
+
   remove_task(task_get_task(*(Window*)key));
 }
 
@@ -326,6 +329,8 @@ void task_refresh_tasklist() {
 }
 
 void draw_taskbar(void* obj, cairo_t* c) {
+  UNUSED(c);
+
   Taskbar* taskbar = obj;
   int state =
       (taskbar->desktop == server.desktop) ? TASKBAR_ACTIVE : TASKBAR_NORMAL;

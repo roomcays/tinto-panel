@@ -223,7 +223,7 @@ Window window_get_active() {
 }
 
 int window_is_active(Window win) {
-  return (win == get_property32(server.root_win, server.atom._NET_ACTIVE_WINDOW,
+  return (win == (Window)get_property32(server.root_win, server.atom._NET_ACTIVE_WINDOW,
                                 XA_WINDOW));
 }
 

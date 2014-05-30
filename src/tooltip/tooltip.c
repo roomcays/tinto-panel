@@ -23,6 +23,7 @@
 #include <cairo.h>
 #include <cairo-xlib.h>
 
+#include "debug.h"
 #include "server.h"
 #include "tooltip.h"
 #include "panel.h"
@@ -31,23 +32,20 @@
 static int x, y, width, height;
 
 // the next functions are helper functions for tooltip handling
-void start_show_timeout();
-void start_hide_timeout();
-void stop_tooltip_timeout();
+void start_show_timeout(void);
+void start_hide_timeout(void);
+void stop_tooltip_timeout(void);
 
 Tooltip g_tooltip;
 
-void default_tooltip() {
+void default_tooltip(void) {
   // give the tooltip some reasonable default values
   memset(&g_tooltip, 0, sizeof(Tooltip));
 
-  g_tooltip.font_color.color[0] = 1;
-  g_tooltip.font_color.color[1] = 1;
-  g_tooltip.font_color.color[2] = 1;
-  g_tooltip.font_color.alpha = 1;
+  g_tooltip.font_color = color_create("#fff");
 }
 
-void cleanup_tooltip() {
+void cleanup_tooltip(void) {
   stop_tooltip_timeout();
   tooltip_hide(0);
   tooltip_copy_text(0);
@@ -91,6 +89,7 @@ void tooltip_trigger_show(Area* area, Panel* p, XEvent* e) {
 }
 
 void tooltip_show(void* arg) {
+  UNUSED(arg);
   int mx, my;
   Window w;
   XTranslateCoordinates(server.dsp, server.root_win, g_tooltip.panel->main_win,
@@ -207,16 +206,21 @@ void tooltip_update() {
   cs = cairo_xlib_surface_create(server.dsp, g_tooltip.window, server.visual,
                                  width, height);
   c = cairo_create(cs);
-  Color bc = g_tooltip.bg->back;
+
+  double red;
+  double green;
+  double blue;
+  double alpha;
+  color_extract_components(&g_tooltip.bg->color, &red, &green, &blue, &alpha);
   Border b = g_tooltip.bg->border;
   if (server.real_transparency) {
     clear_pixmap(g_tooltip.window, 0, 0, width, height);
     draw_rect(c, b.width, b.width, width - 2 * b.width, height - 2 * b.width,
               b.rounded - b.width / 1.571);
-    cairo_set_source_rgba(c, bc.color[0], bc.color[1], bc.color[2], bc.alpha);
+    cairo_set_source_rgba(c, red, green, blue, alpha);
   } else {
     cairo_rectangle(c, 0., 0, width, height);
-    cairo_set_source_rgb(c, bc.color[0], bc.color[1], bc.color[2]);
+    cairo_set_source_rgb(c, red, green, blue);
   }
   cairo_fill(c);
   cairo_set_line_width(c, b.width);
@@ -226,11 +230,18 @@ void tooltip_update() {
   else
     cairo_rectangle(c, b.width / 2.0, b.width / 2.0, width - b.width,
                     height - b.width);
-  cairo_set_source_rgba(c, b.color[0], b.color[1], b.color[2], b.alpha);
+  {
+    double colors[4];
+    color_extract_components_to_array(&b.color, colors);
+    cairo_set_source_rgba(c, colors[0], colors[1], colors[2], colors[3]);
+  }
   cairo_stroke(c);
 
-  Color fc = g_tooltip.font_color;
-  cairo_set_source_rgba(c, fc.color[0], fc.color[1], fc.color[2], fc.alpha);
+  {
+    double colors[4];
+    color_extract_components_to_array(&g_tooltip.font_color, colors);
+    cairo_set_source_rgba(c, colors[0], colors[1], colors[2], colors[3]);
+  }
   layout = pango_cairo_create_layout(c);
   pango_layout_set_font_description(layout, g_tooltip.font_desc);
   pango_layout_set_text(layout, g_tooltip.tooltip_text, -1);
@@ -250,7 +261,7 @@ void tooltip_update() {
   cairo_surface_destroy(cs);
 }
 
-void tooltip_trigger_hide(Tooltip* tooltip) {
+void tooltip_trigger_hide(void) {
   if (g_tooltip.mapped) {
     tooltip_copy_text(0);
     start_hide_timeout();
@@ -261,6 +272,8 @@ void tooltip_trigger_hide(Tooltip* tooltip) {
 }
 
 void tooltip_hide(void* arg) {
+  UNUSED(arg);
+
   stop_tooltip_timeout();
   if (g_tooltip.mapped) {
     g_tooltip.mapped = False;

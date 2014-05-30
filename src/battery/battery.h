@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "color.h"
 #include "common.h"
 #include "area.h"
 
@@ -22,7 +23,7 @@ typedef struct Battery {
   // always start with area
   Area area;
 
-  Color font;
+  color_T font;
   int bat1_posy;
   int bat2_posy;
 } Battery;

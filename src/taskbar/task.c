@@ -28,7 +28,9 @@
 #include <string.h>
 #include <glib.h>
 #include <unistd.h>
+#include <stdint.h>
 
+#include "debug.h"
 #include "window.h"
 #include "task.h"
 #include "taskbar.h"
@@ -142,11 +144,10 @@ void remove_task(Task* tsk) {
     }
   }
 
-  int i;
-  Task* tsk2;
-  Taskbar* tskbar;
+  Task* tsk2 = NULL;
+  Taskbar* tskbar = NULL;
   GPtrArray* task_group = g_hash_table_lookup(win_to_task_table, &win);
-  for (i = 0; i < task_group->len; ++i) {
+  for (uint32_t i = 0; i < task_group->len; ++i) {
     tsk2 = g_ptr_array_index(task_group, i);
     tskbar = tsk2->area.parent;
     tskbar->area.list = g_slist_remove(tskbar->area.list, tsk2);
@@ -200,9 +201,9 @@ int get_title(Task* tsk) {
   tsk->title = title;
   GPtrArray* task_group = task_get_tasks(tsk->win);
   if (task_group) {
-    int i;
-    for (i = 0; i < task_group->len; ++i) {
-      Task* tsk2 = g_ptr_array_index(task_group, i);
+    Task* tsk2 = NULL;
+    for (uint32_t i = 0; i < task_group->len; ++i) {
+      tsk2 = g_ptr_array_index(task_group, i);
       tsk2->title = tsk->title;
       set_task_redraw(tsk2);
     }
@@ -238,8 +239,8 @@ void get_icon(Task* tsk) {
                              panel->g_task.icon_size1);
 #ifdef __x86_64__
     DATA32 icon_data[w * h];
-    int length = w * h;
-    for (i = 0; i < length; ++i) icon_data[i] = tmp_data[i];
+    size_t length = w * h;
+    for (size_t i = 0; i < length; ++i) icon_data[i] = tmp_data[i];
     img = imlib_create_image_using_copied_data(w, h, icon_data);
 #else
     img = imlib_create_image_using_data(w, h, (DATA32*)tmp_data);
@@ -304,8 +305,9 @@ void get_icon(Task* tsk) {
 
   GPtrArray* task_group = task_get_tasks(tsk->win);
   if (task_group) {
-    for (i = 0; i < task_group->len; ++i) {
-      Task* tsk2 = g_ptr_array_index(task_group, i);
+    Task* tsk2 = NULL;
+    for (uint32_t i = 0; i < task_group->len; ++i) {
+      tsk2 = g_ptr_array_index(task_group, i);
       tsk2->icon_width = tsk->icon_width;
       tsk2->icon_height = tsk->icon_height;
       int k;
@@ -344,7 +346,6 @@ void draw_task(void* obj, cairo_t* c) {
   Task* tsk = obj;
   tsk->state_pix[tsk->current_state] = tsk->area.pix;
   PangoLayout* layout;
-  Color* config_text;
   int width = 0, height;
   Panel* panel = (Panel*)tsk->area.panel;
   // printf("draw_task %d %d\n", tsk->area.posx, tsk->area.posy);
@@ -371,9 +372,12 @@ void draw_task(void* obj, cairo_t* c) {
 
     pango_layout_get_pixel_size(layout, &width, &height);
 
-    config_text = &panel->g_task.font[tsk->current_state];
-    cairo_set_source_rgba(c, config_text->color[0], config_text->color[1],
-                          config_text->color[2], config_text->alpha);
+    {
+      double colors[4];
+      color_extract_components_to_array(&panel->g_task.font[tsk->current_state],
+                                        colors);
+      cairo_set_source_rgba(c, colors[0], colors[1], colors[2], colors[3]);
+    }
 
     pango_cairo_update_layout(c, layout);
     double text_posy = (panel->g_task.area.height - height) / 2.0;
@@ -508,8 +512,7 @@ void set_task_state(Task* tsk, int state) {
   if (tsk->current_state != state) {
     GPtrArray* task_group = task_get_tasks(tsk->win);
     if (task_group) {
-      int i;
-      for (i = 0; i < task_group->len; ++i) {
+      for (uint32_t i = 0; i < task_group->len; ++i) {
         Task* tsk1 = g_ptr_array_index(task_group, i);
         tsk1->current_state = state;
         tsk1->area.bg = panel1[0].g_task.background[state];
@@ -534,6 +537,8 @@ void set_task_redraw(Task* tsk) {
 }
 
 void blink_urgent(void* arg) {
+  UNUSED(arg);
+
   GSList* urgent_task = urgent_list;
   while (urgent_task) {
     Task* t = urgent_task->data;

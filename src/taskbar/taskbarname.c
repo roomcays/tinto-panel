@@ -37,12 +37,12 @@
 
 int taskbarname_enabled;
 PangoFontDescription* taskbarname_font_desc;
-Color taskbarname_font;
-Color taskbarname_active_font;
+color_T taskbarname_font;
+color_T taskbarname_active_font;
 
-void default_taskbarname() {
+void default_taskbarname(void) {
   taskbarname_enabled = 0;
-  taskbarname_font_desc = 0;
+  taskbarname_font_desc = NULL;
 }
 
 void init_taskbarname_panel(void* p) {
@@ -103,7 +103,7 @@ void draw_taskbarname(void* obj, cairo_t* c) {
   Taskbarname* taskbar_name = obj;
   Taskbar* taskbar = taskbar_name->area.parent;
   PangoLayout* layout;
-  Color* config_text = (taskbar->desktop == server.desktop)
+  color_T* config_text = (taskbar->desktop == server.desktop)
                            ? &taskbarname_active_font
                            : &taskbarname_font;
 
@@ -118,8 +118,11 @@ void draw_taskbarname(void* obj, cairo_t* c) {
   pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
   pango_layout_set_text(layout, taskbar_name->name, strlen(taskbar_name->name));
 
-  cairo_set_source_rgba(c, config_text->color[0], config_text->color[1],
-                        config_text->color[2], config_text->alpha);
+  {
+    double colors[4];
+    color_extract_components_to_array(config_text, colors);
+    cairo_set_source_rgba(c, colors[0], colors[1], colors[2], colors[3]);
+  }
 
   pango_cairo_update_layout(c, layout);
   cairo_move_to(c, 0, taskbar_name->posy);

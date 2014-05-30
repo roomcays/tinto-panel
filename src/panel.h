@@ -69,7 +69,7 @@ extern GArray* backgrounds;
 
 extern Imlib_Image default_icon;
 
-// tint2 use one panel per monitor and one taskbar per desktop.
+// tinto use one panel per monitor and one taskbar per desktop.
 typedef struct {
   // area.list own all objects of the panel according to config file
   Area area;
@@ -78,6 +78,8 @@ typedef struct {
   point_T location;  // Position relative to root window.
   margin_T margin;
   int pourcentx, pourcenty;
+  size_T width_constrain;
+  size_T height_constrain;
   // location of the panel (monitor number)
   int monitor;
   // --------------------------------------------------
@@ -90,8 +92,7 @@ typedef struct {
   // taskbar[i] is used to loop over taskbar,
   // while panel->area.list is used to loop over all panel's objects
   Taskbar* taskbar;
-  uint8_t desktop_count;
-
+  uint8_t desktop_count; // Number of virtual desktops.
   Clock clock;
 #ifdef ENABLE_BATTERY
   Battery battery;

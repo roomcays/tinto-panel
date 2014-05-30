@@ -17,17 +17,34 @@ typedef struct {
 } point_T;
 
 typedef struct {
-  int width;
-  int height;
-} dimension_T;
-
-
-typedef struct {
   int bottom;
   int left;
   int top;
   int right;
 } margin_T;
+
+typedef enum {
+  PERCENTAGE,
+  POINT,
+  EM,
+  PIXELS,
+} unit_T;
+
+typedef struct {
+  double value;
+  unit_T unit;
+} size_T;
+
+typedef struct {
+  double width_factor;
+  double height_factor;
+  int width;
+  int height;
+  unit_T width_unit;
+  unit_T height_unit;
+} dimension_T;
+
+/* dimension_T dimension_create(const char* str); */
 
 /// \brief Create a new margin_T object with the same values for left and right,
 /// and same values for top and bottom.
@@ -38,9 +55,6 @@ int margin_horizontal(const margin_T* m);
 
 /// \brief Return the vertical margin of a margin object.
 int margin_vertical(const margin_T* m);
-
-
-
 
 // mouse actions
 enum {
@@ -71,16 +85,15 @@ int parse_line(const char* line, char** key, char** value);
 void tint_exec(const char* command);
 
 // conversion
-int hex_char_to_int(char c);
 int hex_to_rgb(char* hex, int* r, int* g, int* b);
-void get_color(char* hex, double* rgb);
+
 
 void extract_values(const char* value, char** value1, char** value2,
                     char** value3);
 
 // adjust Alpha/Saturation/Brightness on an ARGB icon
 // alpha from 0 to 100, satur from 0 to 1, bright from 0 to 1.
-void adjust_asb(DATA32* data, int w, int h, int alpha, float satur,
+void adjust_asb(DATA32* data, uint32_t w, uint32_t h, uint32_t alpha, float satur,
                 float bright);
 void createHeuristicMask(DATA32* data, int w, int h);
 
@@ -103,4 +116,9 @@ void render_image(Drawable d, int x, int y, int w, int h);
     a ^= b;                \
   }
 #endif  // SWAP_INTEGER
-#endif
+
+#define NUMBER_CLAMP(num, min, max) ((num) > (max) ? (max) : (num) < (min) ? (min) : (num))
+
+
+
+#endif // COMMON_H
