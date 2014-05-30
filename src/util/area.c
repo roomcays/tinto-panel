@@ -1,7 +1,5 @@
 /**************************************************************************
 *
-* Tint2 : area
-*
 * Copyright (C) 2008 thierry lorthiois (lorthiois@bbsoft.fr) from Omega
 *distribution
 *
@@ -36,13 +34,13 @@
  * !!! This design is experimental and not yet fully implemented !!!!!!!!!!!!!
  *
  * DATA ORGANISATION :
- * Areas in tint2 are similar to widgets in a GUI.
+ * Areas in tinto are similar to widgets in a GUI.
  * All graphical objects (panel, taskbar, task, systray, clock, ...) 'inherit'
  *an abstract class 'Area'.
  * This class 'Area' manage the background, border, size, position and padding.
  * Area is at the begining of each object (&object == &area).
  *
- * tint2 define one panel per monitor. And each panel have a tree of Area.
+ * tinto define one panel per monitor. And each panel have a tree of Area.
  * The root of the tree is Panel.Area. And task, clock, systray, taskbar,... are
  *nodes.
  *
@@ -358,7 +356,10 @@ void draw(Area* a) {
 }
 
 void draw_background(Area* a, cairo_t* c) {
-  if (a->bg->back.alpha > 0.0) {
+  double bg_colors[4];
+  color_extract_components_to_array(&a->bg->color, bg_colors);
+
+  if (bg_colors[3] > 0.0) {
     // printf("    draw_background (%d %d) RGBA (%lf, %lf, %lf, %lf)\n",
     // a->posx, a->posy, pix->back.color[0], pix->back.color[1],
     // pix->back.color[2], pix->back.alpha);
@@ -366,12 +367,14 @@ void draw_background(Area* a, cairo_t* c) {
               a->width - (2.0 * a->bg->border.width),
               a->height - (2.0 * a->bg->border.width),
               a->bg->border.rounded - a->bg->border.width / 1.571);
-    cairo_set_source_rgba(c, a->bg->back.color[0], a->bg->back.color[1],
-                          a->bg->back.color[2], a->bg->back.alpha);
+    cairo_set_source_rgba(c, bg_colors[0], bg_colors[1], bg_colors[2], bg_colors[3]);
     cairo_fill(c);
   }
 
-  if (a->bg->border.width > 0 && a->bg->border.alpha > 0.0) {
+  double border_colors[4];
+  color_extract_components_to_array(&a->bg->border.color, border_colors);
+
+  if (a->bg->border.width > 0 && border_colors[3] > 0.0) {
     cairo_set_line_width(c, a->bg->border.width);
 
     // draw border inside (x, y, width, height)
@@ -417,8 +420,9 @@ void draw_background(Area* a, cairo_t* c) {
     a->border.color[1], a->border.color[2], 0);
     cairo_set_source (c, linpat);
     */
-    cairo_set_source_rgba(c, a->bg->border.color[0], a->bg->border.color[1],
-                          a->bg->border.color[2], a->bg->border.alpha);
+    cairo_set_source_rgba(c, border_colors[0], border_colors[1],
+                            border_colors[2], border_colors[3]);
+
 
     cairo_stroke(c);
     // cairo_pattern_destroy (linpat);

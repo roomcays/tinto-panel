@@ -28,6 +28,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xmd.h> /* For CARD16 */
 
+#include "debug.h"
 #include "xsettings-client.h"
 #include "server.h"
 #include "panel.h"
@@ -46,7 +47,8 @@ struct _XSettingsClient {
 
 void xsettings_notify_cb(const char* name, XSettingsAction action,
                          XSettingsSetting* setting, void* data) {
-  // printf("xsettings_notify_cb\n");
+  UNUSED(data);
+
   if ((action == XSETTINGS_ACTION_NEW || action == XSETTINGS_ACTION_CHANGED) &&
       name != NULL && setting != NULL) {
     if (!strcmp(name, "Net/IconThemeName") &&
@@ -102,11 +104,16 @@ static void notify_changes(XSettingsClient* client, XSettingsList* old_list) {
   }
 }
 
-static int ignore_errors(Display* display, XErrorEvent* event) { return True; }
+static int ignore_errors(Display* display, XErrorEvent* event) {
+  UNUSED(display);
+  UNUSED(event);
+
+  return True;
+}
 
 static char local_byte_order = '\0';
 
-#define BYTES_LEFT(buffer) ((buffer)->data + (buffer)->len - (buffer)->pos)
+#define BYTES_LEFT(buffer) ((size_t)((buffer)->data + (buffer)->len - (buffer)->pos))
 
 static XSettingsResult fetch_card16(XSettingsBuffer* buffer, CARD16* result) {
   CARD16 x;
@@ -179,7 +186,7 @@ static XSettingsList* parse_settings(unsigned char* data, size_t len) {
 
   result = fetch_card8(&buffer, (CARD8*)&buffer.byte_order);
   if (buffer.byte_order != MSBFirst && buffer.byte_order != LSBFirst) {
-    fprintf(stderr, "Invalid byte order %x in XSETTINGS property\n",
+    WARN("Invalid byte order %x in XSETTINGS property.",
             buffer.byte_order);
     result = XSETTINGS_FAILED;
     goto out;
@@ -289,13 +296,13 @@ out:
   if (result != XSETTINGS_SUCCESS) {
     switch (result) {
     case XSETTINGS_NO_MEM:
-      fprintf(stderr, "Out of memory reading XSETTINGS property\n");
+      WARN("Out of memory reading XSETTINGS property.");
       break;
     case XSETTINGS_ACCESS:
-      fprintf(stderr, "Invalid XSETTINGS property (read off end)\n");
+      WARN("Invalid XSETTINGS property (read off end).");
       break;
     case XSETTINGS_DUPLICATE_ENTRY:
-      fprintf(stderr, "Duplicate XSETTINGS entry for '%s'\n", setting->name);
+      WARN("Duplicate XSETTINGS entry for '%s'.", setting->name);
     case XSETTINGS_FAILED:
     case XSETTINGS_SUCCESS:
     case XSETTINGS_NO_ENTRY:
@@ -333,7 +340,7 @@ static void read_settings(XSettingsClient* client) {
 
   if (result == Success && type == server.atom._XSETTINGS_SETTINGS) {
     if (format != 8) {
-      fprintf(stderr, "Invalid format for XSETTINGS property %d", format);
+      WARN("Invalid format for XSETTINGS property %d.", format);
     } else
       client->settings = parse_settings(data, n_items);
     XFree(data);
@@ -389,7 +396,7 @@ XSettingsClient* xsettings_client_new(Display* display, int screen,
   check_manager_window(client);
 
   if (client->manager_window == None) {
-    printf("NO XSETTINGS manager, tint2 use config 'launcher_icon_theme'.\n");
+    MESSAGE("NO XSETTINGS manager, tinto use config 'launcher_icon_theme'.");
     free(client);
     return NULL;
   } else

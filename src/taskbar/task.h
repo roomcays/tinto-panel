@@ -10,6 +10,9 @@
 #include <X11/Xlib.h>
 #include <pango/pangocairo.h>
 #include <Imlib2.h>
+#include <stdint.h>
+
+#include "color.h"
 #include "common.h"
 #include "timer.h"
 
@@ -47,7 +50,7 @@ typedef struct {
 
   int font_shadow;
   PangoFontDescription* font_desc;
-  Color font[TASK_STATE_COUNT];
+  color_T font[TASK_STATE_COUNT];
   int config_font_mask;
   int tooltip_enabled;
 } Global_task;
@@ -58,7 +61,7 @@ typedef struct {
 
   // TODO: group task with list of windows here
   Window win;
-  int desktop;
+  uint32_t desktop;
   int current_state;
   Imlib_Image icon[TASK_STATE_COUNT];
   Pixmap state_pix[TASK_STATE_COUNT];

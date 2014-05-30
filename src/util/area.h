@@ -25,20 +25,16 @@
 #include <cairo.h>
 #include <cairo-xlib.h>
 
+#include "color.h"
+
 typedef struct {
-  double color[3];
-  double alpha;
+  color_T color;
   int width;
   int rounded;
 } Border;
 
 typedef struct {
-  double color[3];
-  double alpha;
-} Color;
-
-typedef struct {
-  Color back;
+  color_T color;
   Border border;
 } Background;
 

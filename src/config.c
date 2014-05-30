@@ -1,7 +1,4 @@
 /**************************************************************************
-*
-* Tint2 : read/write config file
-*
 * Copyright (C) 2007 Pål Staurland (staura@gmail.com)
 * Modified (C) 2008 thierry lorthiois (lorthiois@bbsoft.fr) from Omega
 *distribution
@@ -37,6 +34,7 @@
 #include <pango/pangoxft.h>
 #include <Imlib2.h>
 
+#include "color.h"
 #include "common.h"
 #include "server.h"
 #include "panel.h"
@@ -143,24 +141,13 @@ void add_entry(char* key, char* value) {
     g_array_index(backgrounds, Background, backgrounds->len - 1).border.width =
         atoi(value);
   } else if (strcmp(key, "background_color") == 0) {
-    Background* bg =
-        &g_array_index(backgrounds, Background, backgrounds->len - 1);
+    Background* bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, bg->back.color);
-    if (value2)
-      bg->back.alpha = atoi(value2) / 100.0;
-    else
-      bg->back.alpha = 0.5;
+    bg->color = color_create(value1);
   } else if (strcmp(key, "border_color") == 0) {
-    Background* bg =
-        &g_array_index(backgrounds, Background, backgrounds->len - 1);
-
+    Background* bg = &g_array_index(backgrounds, Background, backgrounds->len - 1);
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, bg->border.color);
-    if (value2)
-      bg->border.alpha = atoi(value2) / 100.0;
-    else
-      bg->border.alpha = 0.5;
+    bg->border.color = color_create(value1);
   }
 
   /* Panel */
@@ -200,7 +187,7 @@ void add_entry(char* key, char* value) {
 #ifdef ENABLE_BATTERY
         battery_enabled = 1;
 #else
-        fprintf(stderr, "tint2 is build without battery support\n");
+        MESSAGE("tinto was build without battery support\n");
 #endif
       } else if (panel_items_order[j] == 'S') {
         // systray disabled in snapshot mode
@@ -210,8 +197,8 @@ void add_entry(char* key, char* value) {
     }
   } else if (strcmp(key, "panel_margin") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    panel_config.marginx = atoi(value1);
-    if (value2) panel_config.marginy = atoi(value2);
+    if (value2) panel_config.margin = margin_create(atoi(value1), atoi(value2));
+    else panel_config.margin = margin_create(atoi(value1), 0);
   } else if (strcmp(key, "panel_padding") == 0) {
     extract_values(value, &value1, &value2, &value3);
     panel_config.area.paddingxlr = panel_config.area.paddingx = atoi(value1);
@@ -245,8 +232,8 @@ void add_entry(char* key, char* value) {
   } else if (strcmp(key, "font_shadow") == 0)
     panel_config.g_task.font_shadow = atoi(value);
   else if (strcmp(key, "panel_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id > backgrounds->len ? 0 : id;
     panel_config.area.bg = &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "wm_menu") == 0)
     wm_menu = atoi(value);
@@ -284,11 +271,7 @@ void add_entry(char* key, char* value) {
   } else if (strcmp(key, "battery_font_color") == 0) {
 #ifdef ENABLE_BATTERY
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, panel_config.battery.font.color);
-    if (value2)
-      panel_config.battery.font.alpha = atoi(value2) / 100.0;
-    else
-      panel_config.battery.font.alpha = 0.5;
+    panel_config.battery.font = color_create(value1);
 #endif
   } else if (strcmp(key, "battery_padding") == 0) {
 #ifdef ENABLE_BATTERY
@@ -300,8 +283,8 @@ void add_entry(char* key, char* value) {
 #endif
   } else if (strcmp(key, "battery_background_id") == 0) {
 #ifdef ENABLE_BATTERY
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.battery.area.bg = &g_array_index(backgrounds, Background, id);
 #endif
   } else if (strcmp(key, "battery_hide") == 0) {
@@ -337,11 +320,7 @@ void add_entry(char* key, char* value) {
     time2_font_desc = pango_font_description_from_string(value);
   } else if (strcmp(key, "clock_font_color") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, panel_config.clock.font.color);
-    if (value2)
-      panel_config.clock.font.alpha = (atoi(value2) / 100.0);
-    else
-      panel_config.clock.font.alpha = 0.5;
+    panel_config.clock.font = color_create(value1);
   } else if (strcmp(key, "clock_padding") == 0) {
     extract_values(value, &value1, &value2, &value3);
     panel_config.clock.area.paddingxlr = panel_config.clock.area.paddingx =
@@ -349,8 +328,8 @@ void add_entry(char* key, char* value) {
     if (value2) panel_config.clock.area.paddingy = atoi(value2);
     if (value3) panel_config.clock.area.paddingx = atoi(value3);
   } else if (strcmp(key, "clock_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.clock.area.bg = &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "clock_tooltip") == 0) {
     if (strlen(value) > 0) time_tooltip_format = strdup(value);
@@ -375,16 +354,16 @@ void add_entry(char* key, char* value) {
     if (value2) panel_config.g_taskbar.area.paddingy = atoi(value2);
     if (value3) panel_config.g_taskbar.area.paddingx = atoi(value3);
   } else if (strcmp(key, "taskbar_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.g_taskbar.background[TASKBAR_NORMAL] =
         &g_array_index(backgrounds, Background, id);
     if (panel_config.g_taskbar.background[TASKBAR_ACTIVE] == 0)
       panel_config.g_taskbar.background[TASKBAR_ACTIVE] =
           panel_config.g_taskbar.background[TASKBAR_NORMAL];
   } else if (strcmp(key, "taskbar_active_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.g_taskbar.background[TASKBAR_ACTIVE] =
         &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "taskbar_name") == 0) {
@@ -394,34 +373,26 @@ void add_entry(char* key, char* value) {
     panel_config.g_taskbar.area_name.paddingxlr =
         panel_config.g_taskbar.area_name.paddingx = atoi(value1);
   } else if (strcmp(key, "taskbar_name_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.g_taskbar.background_name[TASKBAR_NORMAL] =
         &g_array_index(backgrounds, Background, id);
     if (panel_config.g_taskbar.background_name[TASKBAR_ACTIVE] == 0)
       panel_config.g_taskbar.background_name[TASKBAR_ACTIVE] =
           panel_config.g_taskbar.background_name[TASKBAR_NORMAL];
   } else if (strcmp(key, "taskbar_name_active_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len  ? id : 0;
     panel_config.g_taskbar.background_name[TASKBAR_ACTIVE] =
         &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "taskbar_name_font") == 0) {
     taskbarname_font_desc = pango_font_description_from_string(value);
   } else if (strcmp(key, "taskbar_name_font_color") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, taskbarname_font.color);
-    if (value2)
-      taskbarname_font.alpha = (atoi(value2) / 100.0);
-    else
-      taskbarname_font.alpha = 0.5;
+    taskbarname_font = color_create(value1);
   } else if (strcmp(key, "taskbar_name_active_font_color") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, taskbarname_active_font.color);
-    if (value2)
-      taskbarname_active_font.alpha = (atoi(value2) / 100.0);
-    else
-      taskbarname_active_font.alpha = 0.5;
+    taskbarname_active_font = color_create(value1);
   }
 
   /* Task */
@@ -453,10 +424,11 @@ void add_entry(char* key, char* value) {
     int status = get_task_status(split[1]);
     g_strfreev(split);
     extract_values(value, &value1, &value2, &value3);
-    float alpha = 1;
-    if (value2) alpha = (atoi(value2) / 100.0);
-    get_color(value1, panel_config.g_task.font[status].color);
-    panel_config.g_task.font[status].alpha = alpha;
+    // FIXME:
+    // uint8_t alpha = 0x80;
+    // if (value2) alpha = (atoi(value2) / 100.0);
+    // panel_config.g_task.font[status].alpha = alpha;
+    panel_config.g_task.font[status] = color_create(value1);
     panel_config.g_task.config_font_mask |= (1 << status);
   } else if (g_regex_match_simple("task.*_icon_asb", key, 0, 0)) {
     gchar** split = g_regex_split_simple("_", key, 0, 0);
@@ -471,8 +443,8 @@ void add_entry(char* key, char* value) {
     gchar** split = g_regex_split_simple("_", key, 0, 0);
     int status = get_task_status(split[1]);
     g_strfreev(split);
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.g_task.background[status] =
         &g_array_index(backgrounds, Background, id);
     panel_config.g_task.config_background_mask |= (1 << status);
@@ -499,8 +471,8 @@ void add_entry(char* key, char* value) {
     if (value2) systray.area.paddingy = atoi(value2);
     if (value3) systray.area.paddingx = atoi(value3);
   } else if (strcmp(key, "systray_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     systray.area.bg = &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "systray_sort") == 0) {
     if (strcmp(value, "descending") == 0)
@@ -528,8 +500,8 @@ void add_entry(char* key, char* value) {
     if (value2) panel_config.launcher.area.paddingy = atoi(value2);
     if (value3) panel_config.launcher.area.paddingx = atoi(value3);
   } else if (strcmp(key, "launcher_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     panel_config.launcher.area.bg = &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "launcher_icon_size") == 0) {
     launcher_max_icon_size = atoi(value);
@@ -538,7 +510,7 @@ void add_entry(char* key, char* value) {
     panel_config.launcher.list_apps =
         g_slist_append(panel_config.launcher.list_apps, app);
   } else if (strcmp(key, "launcher_icon_theme") == 0) {
-    // if XSETTINGS manager running, tint2 use it.
+    // if XSETTINGS manager running, tinto use it.
     if (!icon_theme_name) icon_theme_name = strdup(value);
   } else if (strcmp(key, "launcher_icon_asb") == 0) {
     extract_values(value, &value1, &value2, &value3);
@@ -561,16 +533,12 @@ void add_entry(char* key, char* value) {
     if (value1) g_tooltip.paddingx = atoi(value1);
     if (value2) g_tooltip.paddingy = atoi(value2);
   } else if (strcmp(key, "tooltip_background_id") == 0) {
-    int id = atoi(value);
-    id = (id < backgrounds->len && id >= 0) ? id : 0;
+    uint32_t id = atoi(value);
+    id = id < backgrounds->len ? id : 0;
     g_tooltip.bg = &g_array_index(backgrounds, Background, id);
   } else if (strcmp(key, "tooltip_font_color") == 0) {
     extract_values(value, &value1, &value2, &value3);
-    get_color(value1, g_tooltip.font_color.color);
-    if (value2)
-      g_tooltip.font_color.alpha = (atoi(value2) / 100.0);
-    else
-      g_tooltip.font_color.alpha = 0.1;
+    g_tooltip.font_color = color_create(value1);
   } else if (strcmp(key, "tooltip_font") == 0) {
     g_tooltip.font_desc = pango_font_description_from_string(value);
   }
@@ -633,10 +601,8 @@ void add_entry(char* key, char* value) {
       }
     }
   } else
-    fprintf(stderr,
-            "tint2 : invalid option \"%s\",\n  upgrade tint2 or correct your "
-            "config file\n",
-            key);
+    MESSAGE("invalid option \"%s\",\n  upgrade tinto or correct your config"
+            " file\n", key);
 
   if (value1) free(value1);
   if (value2) free(value2);
