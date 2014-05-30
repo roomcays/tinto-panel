@@ -807,7 +807,7 @@ struct Property read_property(Display* disp, Window w, Atom property) {
   WARN("DnD actual format: %d.", actual_format);
   WARN(stderr, "DnD number of items: %lu.", nitems);
 
-  Property p = { .date = ret, .format = actual_format, .nitems = nitems,
+  Property p = { .data = ret, .format = actual_format, .nitems = nitems,
                  .type = actual_type };
 
   return p;

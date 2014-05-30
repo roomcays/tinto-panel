@@ -34,6 +34,7 @@
 #include <pango/pangoxft.h>
 #include <Imlib2.h>
 
+#include "debug.h"
 #include "color.h"
 #include "common.h"
 #include "server.h"
