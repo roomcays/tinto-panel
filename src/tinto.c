@@ -1,10 +1,8 @@
-/**************************************************************************
-*
-* Tint2 panel
+/********************************************************************************
 *
 * Copyright (C) 2007 Pål Staurland (staura@gmail.com)
 * Modified (C) 2008 thierry lorthiois (lorthiois@bbsoft.fr) from Omega
-*distribution
+* distribution
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License version 2
@@ -17,8 +15,8 @@
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-*USA.
-**************************************************************************/
+* USA.
+********************************************************************************/
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -84,10 +82,10 @@ void init(int argc, char* argv[]) {
   // read options
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-      DIE("Usage: tint2 [-c] <config_file>\n");
+      DIE("Usage: tinto [-c] <config_file>\n");
     } else if (strcmp(argv[i], "-v") == 0 ||
                strcmp(argv[i], "--version") == 0) {
-      DIE("tint2 version %s\n", VERSION_STRING);
+      DIE("tinto version %s\n", VERSION_STRING);
     } else if (strcmp(argv[i], "-c") == 0) {
       if (++i < argc) config_path = strdup(argv[i]);
     } else if (strcmp(argv[i], "-s") == 0) {
@@ -123,12 +121,16 @@ void init(int argc, char* argv[]) {
 static int error_trap_depth = 0;
 
 static void error_trap_push(SnDisplay* display, Display* xdisplay) {
+  UNUSED(display);
+  UNUSED(xdisplay);
   ++error_trap_depth;
 }
 
 static void error_trap_pop(SnDisplay* display, Display* xdisplay) {
+  UNUSED(display);
+
   if (error_trap_depth == 0) {
-    fprintf(stderr, "Error trap underflow!\n");
+    WARN("Error trap underflow!");
     return;
   }
 
@@ -137,13 +139,14 @@ static void error_trap_pop(SnDisplay* display, Display* xdisplay) {
 }
 
 static void sigchld_handler(int sig) {
+  UNUSED(sig);
   // Wait for all dead processes
   pid_t pid;
   while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
     SnLauncherContext* ctx;
     ctx = (SnLauncherContext*)g_tree_lookup(server.pids, GINT_TO_POINTER(pid));
     if (ctx == NULL) {
-      fprintf(stderr, "Unknown child %d terminated!\n", pid);
+      WARN("Unknown child %d terminated!", pid);
     } else {
       g_tree_remove(server.pids, GINT_TO_POINTER(pid));
       sn_launcher_context_complete(ctx);
@@ -165,10 +168,8 @@ static gint cmp_ptr(gconstpointer a, gconstpointer b) {
 
 void init_X11() {
   server.dsp = XOpenDisplay(NULL);
-  if (!server.dsp) {
-    fprintf(stderr, "tint2 exit : could not open display.\n");
-    exit(0);
-  }
+  if (!server.dsp) DIE("tint: could not open display.");
+
   server_init_atoms();
   server.screen = DefaultScreen(server.dsp);
   server.root_win = RootWindow(server.dsp, server.screen);
@@ -207,7 +208,7 @@ void init_X11() {
   data_dirs = g_get_system_data_dirs();
   int i;
   for (i = 0; data_dirs[i] != NULL; i++) {
-    path = g_build_filename(data_dirs[i], "tint2", "default_icon.png", NULL);
+    path = g_build_filename(data_dirs[i], "tinto", "default_icon.png", NULL);
     if (g_file_test(path, G_FILE_TEST_EXISTS))
       default_icon = imlib_load_image(path);
     g_free(path);
@@ -304,7 +305,7 @@ void window_action(Task* tsk, int action) {
     if (desk == server.desktop) set_active(tsk->win);
     break;
   case DESKTOP_RIGHT:
-    if (tsk->desktop == server.nb_desktop) break;
+    if (tsk->desktop == (uint32_t)server.nb_desktop) break;
     desk = tsk->desktop + 1;
     windows_set_desktop(tsk->win, desk);
     if (desk == server.desktop) set_active(tsk->win);
@@ -322,7 +323,7 @@ void window_action(Task* tsk, int action) {
   }
 }
 
-int tint2_handles_click(Panel* panel, XButtonEvent* e) {
+int tinto_handles_click(Panel* panel, XButtonEvent* e) {
   point_T point = {e->x, e->y};
   Task* task = click_task(panel, point);
   if (task) {
@@ -368,7 +369,6 @@ void forward_click(XEvent* e) {
   // and xfce doesn't open at all.
   e->xbutton.x = e->xbutton.x_root;
   e->xbutton.y = e->xbutton.y_root;
-  // printf("**** %d, %d\n", e->xbutton.x, e->xbutton.y);
   // XSetInputFocus(server.dsp, e->xbutton.window, RevertToParent,
   // e->xbutton.time);
   XSendEvent(server.dsp, e->xbutton.window, False, ButtonPressMask, e);
@@ -378,7 +378,7 @@ void event_button_press(XEvent* e) {
   Panel* panel = get_panel(e->xany.window);
   if (!panel) return;
 
-  if (wm_menu && !tint2_handles_click(panel, &e->xbutton)) {
+  if (wm_menu && !tinto_handles_click(panel, &e->xbutton)) {
     forward_click(e);
     return;
   }
@@ -450,7 +450,7 @@ void event_button_release(XEvent* e) {
   Panel* panel = get_panel(e->xany.window);
   if (!panel) return;
 
-  if (wm_menu && !tint2_handles_click(panel, &e->xbutton)) {
+  if (wm_menu && !tinto_handles_click(panel, &e->xbutton)) {
     forward_click(e);
     if (panel_layer == BOTTOM_LAYER) XLowerWindow(server.dsp, panel->main_win);
     task_drag = 0;
@@ -551,11 +551,11 @@ void event_property_notify(XEvent* e) {
     else if (at == server.atom._NET_DESKTOP_NAMES) {
       if (!taskbarname_enabled) return;
       GSList* l, *list = server_get_name_of_desktop();
-      int j;
       gchar* name;
       Taskbar* tskbar;
       for (i = 0; i < nb_panel; i++) {
-        for (j = 0, l = list; j < panel1[i].nb_desktop; j++) {
+        l = list;
+        for (uint8_t j = 0; j < panel1[i].desktop_count; j++) {
           if (l) {
             name = g_strdup(l->data);
             l = l->next;
@@ -669,8 +669,6 @@ void event_property_notify(XEvent* e) {
           return;
       }
     }
-    // printf("atom root_win = %s, %s\n", XGetAtomName(server.dsp, at),
-    // tsk->title);
 
     // Window title changed
     if (at == server.atom._NET_WM_VISIBLE_NAME ||
@@ -707,8 +705,7 @@ void event_property_notify(XEvent* e) {
     }
     // Window desktop changed
     else if (at == server.atom._NET_WM_DESKTOP) {
-      int desktop = window_get_desktop(win);
-      // printf("  Window desktop changed %d, %d\n", tsk->desktop, desktop);
+      uint32_t desktop = window_get_desktop(win);
       // bug in windowmaker : send unecessary 'desktop changed' when focus
       // changed
       if (desktop != tsk->desktop) {
@@ -751,7 +748,6 @@ void event_configure_notify(Window win) {
   for (l = systray.list_icons; l; l = l->next) {
     traywin = (TrayWindow*)l->data;
     if (traywin->tray_id == win) {
-      // printf("move tray %d\n", traywin->x);
       XMoveResizeWindow(server.dsp, traywin->id, traywin->x, traywin->y,
                         traywin->width, traywin->height);
       XResizeWindow(server.dsp, traywin->tray_id, traywin->width,
@@ -811,19 +807,12 @@ struct Property read_property(Display* disp, Window w, Atom property) {
     read_bytes *= 2;
   } while (bytes_after != 0);
 
-  fprintf(stderr, "DnD %s:%d: Property:\n", __FILE__, __LINE__);
-  fprintf(stderr, "DnD %s:%d: Actual type: %s\n", __FILE__, __LINE__,
-          GetAtomName(disp, actual_type));
-  fprintf(stderr, "DnD %s:%d: Actual format: %d\n", __FILE__, __LINE__,
-          actual_format);
-  fprintf(stderr, "DnD %s:%d: Number of items: %lu\n", __FILE__, __LINE__,
-          nitems);
+  WARN("DnD actual type: %s.", GetAtomName(disp, actual_type));
+  WARN("DnD actual format: %d.", actual_format);
+  WARN(stderr, "DnD number of items: %lu.", nitems);
 
-  Property p;
-  p.data = ret;
-  p.format = actual_format;
-  p.nitems = nitems;
-  p.type = actual_type;
+  Property p = { .data = ret, .format = actual_format, .nitems = nitems,
+                 .type = actual_type };
 
   return p;
 }
@@ -838,8 +827,7 @@ Atom pick_target_from_list(Display* disp, Atom* atom_list, int nitems) {
   int i;
   for (i = 0; i < nitems; i++) {
     char* atom_name = GetAtomName(disp, atom_list[i]);
-    fprintf(stderr, "DnD %s:%d: Type %d = %s\n", __FILE__, __LINE__, i,
-            atom_name);
+    WARN("DnD type %d = %s.", i, atom_name);
 
     // See if this data type is allowed and of higher priority (closer to zero)
     // than the present one.
@@ -890,17 +878,11 @@ void dnd_enter(XClientMessageEvent* e) {
   dnd_source_window = e->data.l[0];
   dnd_version = (e->data.l[1] >> 24);
 
-  fprintf(stderr, "DnD %s:%d: DnDEnter\n", __FILE__, __LINE__);
-  fprintf(stderr, "DnD %s:%d: DnDEnter. Supports > 3 types = %s\n", __FILE__,
-          __LINE__, more_than_3 ? "yes" : "no");
-  fprintf(stderr, "DnD %s:%d: Protocol version = %d\n", __FILE__, __LINE__,
-          dnd_version);
-  fprintf(stderr, "DnD %s:%d: Type 1 = %s\n", __FILE__, __LINE__,
-          GetAtomName(server.dsp, e->data.l[2]));
-  fprintf(stderr, "DnD %s:%d: Type 2 = %s\n", __FILE__, __LINE__,
-          GetAtomName(server.dsp, e->data.l[3]));
-  fprintf(stderr, "DnD %s:%d: Type 3 = %s\n", __FILE__, __LINE__,
-          GetAtomName(server.dsp, e->data.l[4]));
+  WARN("DnD DnDEnter. Supports > 3 types = %s.", more_than_3 ? "yes" : "no");
+  WARN("DnD Protocol version = %d.", dnd_version);
+  WARN("DnD Type 1 = %s.", GetAtomName(server.dsp, e->data.l[2]));
+  WARN("DnD Type 2 = %s.", GetAtomName(server.dsp, e->data.l[3]));
+  WARN("DnD Type 3 = %s.", GetAtomName(server.dsp, e->data.l[4]));
 
   // Query which conversions are available and pick the best
 
@@ -917,8 +899,7 @@ void dnd_enter(XClientMessageEvent* e) {
                                       e->data.l[4]);
   }
 
-  fprintf(stderr, "DnD %s:%d: Requested type = %s\n", __FILE__, __LINE__,
-          GetAtomName(server.dsp, dnd_atom));
+  WARN("DnD Requested type = %s.", GetAtomName(server.dsp, dnd_atom));
 }
 
 void dnd_position(XClientMessageEvent* e) {
@@ -934,7 +915,7 @@ void dnd_position(XClientMessageEvent* e) {
   point_T point = {mapX, mapY};
   Task* task = click_task(panel, point);
   if (task) {
-    if (task->desktop != server.desktop) set_desktop(task->desktop);
+    if (task->desktop != (uint32_t)server.desktop) set_desktop(task->desktop);
     window_action(task, TOGGLE);
   } else {
     point.x = mapX;
@@ -1015,9 +996,8 @@ start:
   else
     okay = config_read();
   if (!okay) {
-    fprintf(stderr, "usage: tint2 [-c] <config_file>\n");
     cleanup();
-    exit(1);
+    DIE("Usage: tinto [-c] <config_file>");
   }
 
   init_panel();
@@ -1051,9 +1031,9 @@ start:
       for (i = 0; i < nb_panel; i++) {
         panel = &panel1[i];
 
-        if (panel->is_hidden) {
+        if (panel->hidden) {
           XCopyArea(server.dsp, panel->hidden_pixmap, panel->main_win,
-                    server.gc, 0, 0, panel->hidden_width, panel->hidden_height,
+                    server.gc, 0, 0, panel->hidden_dimen.width, panel->hidden_dimen.height,
                     0, 0);
           XSetWindowBackgroundPixmap(server.dsp, panel->main_win,
                                      panel->hidden_pixmap);
@@ -1070,9 +1050,8 @@ start:
       XFlush(server.dsp);
 
       panel = (Panel*)systray.area.panel;
-      if (refresh_systray && panel && !panel->is_hidden) {
+      if (refresh_systray && panel && !panel->hidden) {
         refresh_systray = 0;
-        // tint2 doen't draw systray icons. it just redraw background.
         XSetWindowBackgroundPixmap(server.dsp, panel->main_win,
                                    panel->temp_pmap);
         // force icon's refresh
@@ -1104,7 +1083,7 @@ start:
             autohide_trigger_show(panel);
           else if (e.type == LeaveNotify)
             autohide_trigger_hide(panel);
-          if (panel->is_hidden) {
+          if (panel->hidden) {
             if (e.type == ClientMessage &&
                 e.xclient.message_type == server.atom.XdndPosition) {
               hidden_dnd = 1;
@@ -1186,7 +1165,7 @@ start:
 
         case ClientMessage:
           ev = &e.xclient;
-          if (ev->data.l[1] == server.atom._NET_WM_CM_S0) {
+          if ((Atom)ev->data.l[1] == server.atom._NET_WM_CM_S0) {
             if (ev->data.l[2] == None)
               // Stop real_transparency
               signal_pending = SIGUSR1;
@@ -1210,16 +1189,11 @@ start:
         case SelectionNotify: {
           Atom target = e.xselection.target;
 
-          fprintf(stderr, "DnD %s:%d: A selection notify has arrived!\n",
-                  __FILE__, __LINE__);
-          fprintf(stderr, "DnD %s:%d: Requestor = %lu\n", __FILE__, __LINE__,
-                  e.xselectionrequest.requestor);
-          fprintf(stderr, "DnD %s:%d: Selection atom = %s\n", __FILE__,
-                  __LINE__, GetAtomName(server.dsp, e.xselection.selection));
-          fprintf(stderr, "DnD %s:%d: Target atom    = %s\n", __FILE__,
-                  __LINE__, GetAtomName(server.dsp, target));
-          fprintf(stderr, "DnD %s:%d: Property atom  = %s\n", __FILE__,
-                  __LINE__, GetAtomName(server.dsp, e.xselection.property));
+          WARN("DnD A selection notify has arrived!.");
+          WARN("DnD Requestor = %lu.", e.xselectionrequest.requestor);
+          WARN("DnD Selection atom = %s.", GetAtomName(server.dsp, e.xselection.selection));
+          WARN("DnD Target atom    = %s.", GetAtomName(server.dsp, target));
+          WARN("DnD Property atom  = %s.", GetAtomName(server.dsp, e.xselection.property));
 
           if (e.xselection.property != None && dnd_launcher_exec) {
             Property prop =
@@ -1231,23 +1205,15 @@ start:
               dnd_atom = pick_target_from_targets(server.dsp, prop);
 
               if (dnd_atom == None) {
-                fprintf(stderr, "No matching datatypes.\n");
+                WARN("No matching datatypes.");
               } else {
                 // Request the data type we are able to select
-                fprintf(stderr, "Now requsting type %s",
-                        GetAtomName(server.dsp, dnd_atom));
+                WARN("Now requsting type %s.", GetAtomName(server.dsp, dnd_atom));
                 XConvertSelection(server.dsp, dnd_selection, dnd_atom,
                                   dnd_selection, dnd_target_window,
                                   CurrentTime);
               }
             } else if (target == dnd_atom) {
-              // Dump the binary data
-              fprintf(stderr, "DnD %s:%d: Data begins:\n", __FILE__, __LINE__);
-              fprintf(stderr, "--------\n");
-              int i;
-              for (i = 0; i < prop.nitems * prop.format / 8; i++)
-                fprintf(stderr, "%c", ((char*)prop.data)[i]);
-              fprintf(stderr, "--------\n");
 
               int cmd_length = 0;
               cmd_length += 1;  // (
@@ -1296,8 +1262,7 @@ start:
               }
               strcat(cmd, "\"");
               strcat(cmd, "&)");
-              fprintf(stderr, "DnD %s:%d: Running command: %s\n", __FILE__,
-                      __LINE__, cmd);
+              WARN("DnD Running command: %s.", cmd);
               tint_exec(cmd);
               free(cmd);
 
@@ -1350,7 +1315,6 @@ start:
     if (signal_pending) {
       cleanup();
       if (signal_pending == SIGUSR1) {
-        // restart tint2
         // SIGUSR1 used when : user's signal, composite manager stop/start or
         // xrandr
         FD_CLR(x11_fd, &fdset);  // not sure if needed

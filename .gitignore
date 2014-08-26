@@ -4,8 +4,7 @@ CMakeCache.txt
 *Makefile
 *cmake_install.cmake
 version.h
-tint2
-src/tint2conf/tint2conf
+\.#.*
 tasks.org
 src/__SEMANTIC_CLANG_TEMPFILE.c                                                        │
 tinto

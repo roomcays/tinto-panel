@@ -27,28 +27,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "common.h"
-#include "../server.h"
+#include "debug.h"
+#include "server.h"
 
-void copy_file(const char* pathSrc, const char* pathDest) {
-  FILE* fileSrc, *fileDest;
+/// \brief Copies a binary file from a path to another.
+///
+/// \param from where to copy the file.
+///
+/// \param to where to write the copied file.
+void copy_file(const char* from, const char* to) {
+  FILE* from_fh = fopen(from, "rb");
+  if (!from_fh) return;
+
+  FILE* to_fh = fopen(to, "wb");
+  if (!to_fh) {
+    return;
+  }
+
+  size_t const LINE_LENGTH = 100;
+  size_t bytes_read = 0;
+  size_t bytes_written = 0;
   char line[100];
-  int nb;
+  while (feof(from_fh) == 0) {
+    bytes_read = fread(line, 1, LINE_LENGTH, from_fh);
+    bytes_written = fwrite(line, 1, bytes_read, to_fh);
+#ifdef TINTO_DEVEL_MODE
+    if (bytes_read != bytes_written)
+      WARN("Bytes written differs from bytes read.");
+#endif // TINTO_DEVEL_MODE
+  }
 
-  fileSrc = fopen(pathSrc, "rb");
-  if (fileSrc == NULL) return;
-
-  fileDest = fopen(pathDest, "wb");
-  if (fileDest == NULL) return;
-
-  while ((nb = fread(line, 1, 100, fileSrc)) > 0)
-    if (nb != fwrite(line, 1, nb, fileDest))
-      printf("Error while copying file %s to %s\n", pathSrc, pathDest);
-
-  fclose(fileDest);
-  fclose(fileSrc);
+  fclose(to_fh);
+  fclose(from_fh);
 }
 
 int parse_line(const char* line, char** key, char** value) {
@@ -88,54 +103,6 @@ void tint_exec(const char* command) {
   }
 }
 
-int hex_char_to_int(char c) {
-  int r;
-
-  if (c >= '0' && c <= '9')
-    r = c - '0';
-  else if (c >= 'a' && c <= 'f')
-    r = c - 'a' + 10;
-  else if (c >= 'A' && c <= 'F')
-    r = c - 'A' + 10;
-  else
-    r = 0;
-
-  return r;
-}
-
-int hex_to_rgb(char* hex, int* r, int* g, int* b) {
-  int len;
-
-  if (hex == NULL || hex[0] != '#') return (0);
-
-  len = strlen(hex);
-  if (len == 3 + 1) {
-    *r = hex_char_to_int(hex[1]);
-    *g = hex_char_to_int(hex[2]);
-    *b = hex_char_to_int(hex[3]);
-  } else if (len == 6 + 1) {
-    *r = hex_char_to_int(hex[1]) * 16 + hex_char_to_int(hex[2]);
-    *g = hex_char_to_int(hex[3]) * 16 + hex_char_to_int(hex[4]);
-    *b = hex_char_to_int(hex[5]) * 16 + hex_char_to_int(hex[6]);
-  } else if (len == 12 + 1) {
-    *r = hex_char_to_int(hex[1]) * 16 + hex_char_to_int(hex[2]);
-    *g = hex_char_to_int(hex[5]) * 16 + hex_char_to_int(hex[6]);
-    *b = hex_char_to_int(hex[9]) * 16 + hex_char_to_int(hex[10]);
-  } else
-    return 0;
-
-  return 1;
-}
-
-void get_color(char* hex, double* rgb) {
-  int r, g, b;
-  hex_to_rgb(hex, &r, &g, &b);
-
-  rgb[0] = (r / 255.0);
-  rgb[1] = (g / 255.0);
-  rgb[2] = (b / 255.0);
-}
-
 void extract_values(const char* value, char** value1, char** value2,
                     char** value3) {
   char* b = 0, *c = 0;
@@ -172,17 +139,17 @@ void extract_values(const char* value, char** value1, char** value2,
   }
 }
 
-void adjust_asb(DATA32* data, int w, int h, int alpha, float satur,
+void adjust_asb(DATA32* data, uint32_t w, uint32_t h, uint32_t alpha, float satur,
                 float bright) {
-  unsigned int x, y;
+  uint32_t x, y;
   unsigned int a, r, g, b, argb;
   unsigned long id;
-  int cmax, cmin;
+  uint32_t cmax, cmin;
   float h2, f, p, q, t;
   float hue, saturation, brightness;
   float redc, greenc, bluec;
 
-  for (y = 0; y < h; y++) {
+  for (y = 0; y < h; ++y) {
     for (id = y * w, x = 0; x < w; x++, id++) {
       argb = data[id];
       a = (argb >> 24) & 0xff;
@@ -202,7 +169,7 @@ void adjust_asb(DATA32* data, int w, int h, int alpha, float satur,
         saturation = ((float)(cmax - cmin)) / ((float)cmax);
       else
         saturation = 0;
-      if (saturation == 0)
+      if (saturation == 0.0F)
         hue = 0;
       else {
         redc = ((float)(cmax - r)) / ((float)(cmax - cmin));
@@ -228,7 +195,7 @@ void adjust_asb(DATA32* data, int w, int h, int alpha, float satur,
       if (alpha != 100) a = (a * alpha) / 100;
 
       // convert HSB to RGB
-      if (saturation == 0) {
+      if (saturation == 0.0F) {
         r = g = b = (int)(brightness * 255.0f + 0.5f);
       } else {
         h2 = (hue - (int)hue) * 6.0f;
@@ -339,3 +306,75 @@ void render_image(Drawable d, int x, int y, int w, int h) {
   XRenderFreePicture(server.dsp, pict_image);
   XRenderFreePicture(server.dsp, pict_drawable);
 }
+
+/// \brief Create a new margin_T object with the same values for left and right,
+/// and same values for top and bottom.
+inline margin_T margin_create(int horizon, int vert) {
+  margin_T marg;
+  marg.left = marg.right = horizon >> 1;
+  marg.top = marg.bottom = vert >> 1;
+
+  return marg;
+}
+
+/// \brief Return the horizontal margin of a margin object
+inline int margin_horizontal(const margin_T* m) { return m->left + m->right; }
+
+/// \brief Return the vertical margin of a margin object.
+inline int margin_vertical(const margin_T* m) { return m->top + m->bottom; }
+
+// 12px 20px
+// 32px
+// 0.5em 32px
+/* inline size_T size_create(const char* str) { */
+/*   char* val = strdup(str); */
+/*   size_T size = { .value = 0.0, .unit = PIXELS }; */
+/*   if (val) { */
+/*     char* ptr = strstr(val, "%"); */
+/*     if (ptr) { */
+/*       size.unit = PERCENTAGE; */
+/*       *ptr = '\0'; */
+/*       size.value = atof(val); */
+/*     } */
+/*     else if ((ptr = strstr(val, "em"))) { */
+/*       size.unit = EM; */
+/*       *ptr = '\0'; */
+/*       size.value = atof(val); */
+/*     } */
+/*     else if ((ptr = strstr(val, "pt"))) { */
+/*       size.unit = POINT; */
+/*       *ptr = '\0'; */
+/*       size.value = atof(val); */
+/*     } */
+/*     else { // Defaults to PIXELS in case unit is missing. */
+/*       size.unit = PIXELS; */
+/*       *ptr = '\0'; */
+/*       size.value = atof(val); */
+/*     } */
+/*   } */
+
+/*   free(val); */
+
+/*   return size; */
+/* } */
+
+/* inline double dimension_valueof(const size_T* sz, double* factor) { */
+/*   switch (sz->unit) { */
+/*   case PIXELS: */
+/*     return sz->value; */
+
+/*   case PERCENTAGE: */
+/*     if (factor) { */
+/*       *factor = NUMBER_CLAMP(*factor, 0.0, 100.0); */
+/*       return *factor * sz->value; */
+/*     } */
+/*     else */
+/*       return sz->value; */
+
+/*   case EM: */
+/*     return sz->value; */
+
+/*   case POINT: */
+/*     return sz->value; */
+/*   } */
+/* } */

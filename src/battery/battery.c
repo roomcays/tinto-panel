@@ -37,6 +37,7 @@
 #include <sys/sysctl.h>
 #endif
 
+#include "debug.h"
 #include "window.h"
 #include "server.h"
 #include "panel.h"
@@ -67,6 +68,8 @@ int apm_fd;
 #endif
 
 void update_batterys(void* arg) {
+  UNUSED(arg);
+
   int old_percentage = battery_state.percentage;
   int16_t old_hours = battery_state.time.hours;
   int8_t old_minutes = battery_state.time.minutes;
@@ -170,7 +173,7 @@ void init_battery() {
   }
   if (directory) g_dir_close(directory);
   if (!battery_dir) {
-    fprintf(stderr, "ERROR: battery applet can't found power_supply\n");
+    WARN("battery applet can't found power_supply.");
     default_battery();
     return;
   }
@@ -185,7 +188,7 @@ void init_battery() {
       path_energy_now = g_build_filename(battery_dir, "charge_now", NULL);
       path_energy_full = g_build_filename(battery_dir, "charge_full", NULL);
     } else {
-      fprintf(stderr, "ERROR: can't found energy_* or charge_*\n");
+      WARN("ERROR: can't found energy_* or charge_*.");
     }
     g_free(path2);
   }
@@ -208,7 +211,7 @@ void init_battery() {
     if (fp1 == NULL || fp2 == NULL || fp3 == NULL || fp4 == NULL) {
       cleanup_battery();
       default_battery();
-      fprintf(stderr, "ERROR: battery applet can't open energy_now\n");
+      WARN("battery applet can't open energy_now.");
     }
     fclose(fp1);
     fclose(fp2);
@@ -290,7 +293,7 @@ void update_battery() {
   len = sizeof(sysctl_out);
 
   if (sysctlbyname("hw.acpi.battery.state", &sysctl_out, &len, NULL, 0) != 0)
-    fprintf(stderr, "power update: no such sysctl");
+    WARN("power update: no such sysctl.");
 
   // attemp to map the battery state to linux
   battery_state.state = BATTERY_UNKNOWN;
@@ -411,8 +414,11 @@ void draw_battery(void* obj, cairo_t* c) {
   pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
   pango_layout_set_text(layout, buf_bat_percentage, strlen(buf_bat_percentage));
 
-  cairo_set_source_rgba(c, battery->font.color[0], battery->font.color[1],
-                        battery->font.color[2], battery->font.alpha);
+  {
+    double colors[4];
+    color_extract_components_to_array(&battery->font, colors);
+    cairo_set_source_rgba(c, colors[0], colors[1], colors[2], colors[3]);
+  }
 
   pango_cairo_update_layout(c, layout);
   cairo_move_to(c, 0, battery->bat1_posy);

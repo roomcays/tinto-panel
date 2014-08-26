@@ -61,13 +61,14 @@ set(SOURCES src/config.c
              src/taskbar/taskbarname.c
              src/tooltip/tooltip.c
              src/util/area.c
+             src/util/color.c
              src/util/common.c
              src/util/timer.c
              src/util/window.c
              src/util/debug.c)
 
 option(ENABLE_BATTERY "Enable battery status plugin." ON)
-option(ENABLE_TINTOCONF "Enable tint2conf build, a GTK+2 theme switcher for tint2." OFF )
+
 option(ENABLE_SN "Startup notification support." ON)
 if(ENABLE_SN)
   if(SN_FOUND)
@@ -83,15 +84,10 @@ endif(ENABLE_BATTERY)
 set(MANDIR share/man CACHE PATH "Directory for man pages.")
 set(DATADIR share CACHE PATH "Directory for shared data.")
 set(SYSCONFDIR /etc CACHE PATH "Directory for configuration files.")
-set(DOCDIR share/doc/tint2 CACHE PATH "Directory for documentation files.")
+set(DOCDIR share/doc/tinto CACHE PATH "Directory for documentation files.")
 
 add_definitions(-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200809L)
 
-if(ENABLE_TINTOCONF)
-  add_definitions(-DHAVE_VERSION_H)
-  add_subdirectory(src/tintoconf)
-  add_dependencies(tintoconf version)
-endif(ENABLE_TINTOCONF)
 
 # add_custom_target(version ALL "${PROJECT_SOURCE_DIR}/get_svnrev.sh" "\"${PROJECT_SOURCE_DIR}\"")
 
@@ -125,8 +121,8 @@ endif(HAS_STRLCAT AND HAST_STRLCPY)
 remove_definitions(-DHAS_STRLCAT -DHAS_STRLCPY)
 
 add_dependencies(${PROJECT_NAME} version)
-set(CMAKE_C_FLAGS "-std=c11 -O3")
-set(CMAKE_C_FLAGS_DEBUG  "-std=c11 -O0 -pedantic -Wall -g")
+set(CMAKE_C_FLAGS "-std=c11 -O3 -fstack-protector -fPIE")
+set(CMAKE_C_FLAGS_DEBUG  "-std=c11 -O0 -pedantic -Wall -g -fstack-protector -Wundef -Wunreachable-code -Winit-self -Wformat-security -fPIE -Wcast-qual -ferror-limit=5 -Wbad-function-cast -Wfloat-equal -Wstrict-prototypes -Wsequence-point -Wextra")
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release")
@@ -135,11 +131,11 @@ endif(NOT CMAKE_BUILD_TYPE)
 string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 if (${CMAKE_BUILD_TYPE} STREQUAL "debug")
   set(CMAKE_C_COMPILER "clang")
-  add_definitions(-DDEVEL_MODE)
+  add_definitions(-DTINTO_DEVEL_MODE=1)
   remove_definitions(-DNDEBUG)
 endif(${CMAKE_BUILD_TYPE} STREQUAL "debug")
 
-set(CMAKE_EXE_LINKER_FLAGS "-pthread")
+set(CMAKE_EXE_LINKER_FLAGS "-pthread -fpie")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES config-example/tinto.conf DESTINATION ${SYSCONFDIR}/xdg/${PROJECT_NAME})

@@ -13,12 +13,13 @@
 #include <sys/time.h>
 #include "common.h"
 #include "area.h"
+#include "color.h"
 
 typedef struct Clock {
   // always start with area
   Area area;
 
-  Color font;
+  color_T font;
   int time1_posy;
   int time2_posy;
 } Clock;
@@ -36,13 +37,13 @@ extern char* clock_rclick_command;
 extern int clock_enabled;
 
 // default global data
-void default_clock();
+void default_clock(void);
 
 // freed memory
-void cleanup_clock();
+void cleanup_clock(void);
 
 // initialize clock : y position, precision, ...
-void init_clock();
+void init_clock(void);
 void init_clock_panel(void* panel);
 
 void draw_clock(void* obj, cairo_t* c);

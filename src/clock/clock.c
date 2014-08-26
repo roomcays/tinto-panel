@@ -26,6 +26,7 @@
 #include <pango/pangocairo.h>
 #include <stdlib.h>
 
+#include "debug.h"
 #include "window.h"
 #include "server.h"
 #include "panel.h"
@@ -52,20 +53,14 @@ static timeout* clock_timeout;
 
 void default_clock() {
   clock_enabled = 0;
-  clock_timeout = 0;
-  time1_format = 0;
-  time1_timezone = 0;
-  time2_format = 0;
-  time2_timezone = 0;
-  time_tooltip_format = 0;
-  time_tooltip_timezone = 0;
-  clock_lclick_command = 0;
-  clock_rclick_command = 0;
-  time1_font_desc = 0;
-  time2_font_desc = 0;
+  clock_timeout = NULL;
+  time1_font_desc = time2_font_desc = NULL;
+  time1_format = time1_timezone = time2_format = time2_timezone =
+  time_tooltip_format = time_tooltip_timezone = clock_lclick_command =
+  clock_rclick_command = NULL;
 }
 
-void cleanup_clock() {
+void cleanup_clock(void) {
   if (time1_font_desc) pango_font_description_free(time1_font_desc);
   if (time2_font_desc) pango_font_description_free(time2_font_desc);
   if (time1_format) g_free(time1_format);
@@ -80,6 +75,7 @@ void cleanup_clock() {
 }
 
 void update_clocks_sec(void* arg) {
+  UNUSED(arg);
   gettimeofday(&time_clock, 0);
   int i;
   if (time1_format) {
@@ -92,6 +88,7 @@ void update_clocks_min(void* arg) {
   // remember old_sec because after suspend/hibernate the clock should be
   // updated directly, and not
   // on next minute change
+  UNUSED(arg);
   time_t old_sec = time_clock.tv_sec;
   gettimeofday(&time_clock, 0);
   if (time_clock.tv_sec % 60 == 0 || time_clock.tv_sec - old_sec > 60) {
@@ -118,6 +115,7 @@ struct tm* clock_gettime_for_tz(const char* timezone) {
 }
 
 const char* clock_get_tooltip(void* obj) {
+  UNUSED(obj);
   strftime(buf_tooltip, sizeof(buf_tooltip), time_tooltip_format,
            clock_gettime_for_tz(time_tooltip_timezone));
   return buf_tooltip;
@@ -169,9 +167,12 @@ void draw_clock(void* obj, cairo_t* c) {
   pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
   pango_layout_set_text(layout, buf_time, strlen(buf_time));
 
-  cairo_set_source_rgba(c, clock->font.color[0], clock->font.color[1],
-                        clock->font.color[2], clock->font.alpha);
-
+  double green;
+  double blue;
+  double red;
+  double alpha;
+  color_extract_components(&clock->font, &red, &green, &blue, &alpha);
+  cairo_set_source_rgba(c, red, green, blue, alpha);
   pango_cairo_update_layout(c, layout);
   cairo_move_to(c, 0, clock->time1_posy);
   pango_cairo_show_layout(c, layout);

@@ -1,6 +1,5 @@
 /**************************************************************************
 *
-* Tint2 panel
 *
 * Copyright (C) 2007 Pål Staurland (staura@gmail.com)
 * Modified (C) 2008 thierry lorthiois (lorthiois@bbsoft.fr)
@@ -26,12 +25,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "server.h"
 #include "config.h"
 #include "task.h"
 #include "window.h"
 
-void server_catch_error(Display* d, XErrorEvent* ev) {}
+
+void server_catch_error(Display* d, XErrorEvent* ev) {
+  UNUSED(d);
+  UNUSED(ev);
+}
 
 void server_init_atoms() {
   server.atom._XROOTPMAP_ID = XInternAtom(server.dsp, "_XROOTPMAP_ID", False);
@@ -230,9 +234,8 @@ void get_root_pixmap() {
 
   unsigned long* res;
   Atom pixmap_atoms[] = {server.atom._XROOTPMAP_ID, server.atom._XROOTMAP_ID};
-  int i;
 
-  for (i = 0; i < sizeof(pixmap_atoms) / sizeof(Atom); ++i) {
+  for (size_t i = 0, atoms_count = sizeof(pixmap_atoms) / sizeof(Atom); i < atoms_count; ++i) {
     res = server_get_property(server.root_win, pixmap_atoms[i], XA_PIXMAP, 0);
     if (res) {
       ret = *((Pixmap*)res);
@@ -243,7 +246,7 @@ void get_root_pixmap() {
   server.root_pmap = ret;
 
   if (server.root_pmap == None)
-    fprintf(stderr, "tint2 : pixmap background detection failed\n");
+    MESSAGE("tinto : pixmap background detection failed\n");
   else {
     XGCValues gcv;
     gcv.ts_x_origin = 0;
@@ -379,9 +382,7 @@ void get_desktops() {
   }
   if (server.nb_desktop == 0) {
     server.nb_desktop = 1;
-    fprintf(stderr,
-            "warning : WM doesn't respect NETWM specs. tint2 default to 1 "
-            "desktop.\n");
+    MESSAGE("WM doesn't respect NETWM specs. tinto default to 1 desktop.");
   }
 }
 

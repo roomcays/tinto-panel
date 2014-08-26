@@ -1,6 +1,4 @@
 /**************************************************************************
-* Tint2 : systraybar
-*
 * Copyright (C) 2009 thierry lorthiois (lorthiois@bbsoft.fr) from Omega
 *distribution
 * based on 'docker-1.5' from Ben Jansens.
@@ -31,6 +29,7 @@
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xrender.h>
 
+#include "debug.h"
 #include "systraybar.h"
 #include "server.h"
 #include "panel.h"
@@ -84,7 +83,7 @@ void init_systray() {
 
   if (!server.visual32 && (systray.alpha != 100 || systray.brightness != 0 ||
                            systray.saturation != 0)) {
-    printf(
+    WARN(
         "No 32 bit visual for your X implementation. 'systray_asb = 100 0 0' "
         "will be forced\n");
     systray.alpha = 100;
@@ -111,6 +110,9 @@ void init_systray_panel(void* p) {
 }
 
 void draw_systray(void* obj, cairo_t* c) {
+  UNUSED(obj);
+  UNUSED(c);
+
   if (server.real_transparency || systray.alpha != 100 ||
       systray.brightness != 0 || systray.saturation != 0) {
     if (render_background) XFreePixmap(server.dsp, render_background);
@@ -141,7 +143,6 @@ int resize_systray(void* obj) {
   for (l = systray.list_icons; l; l = l->next) {
     if (!((TrayWindow*)l->data)->hide) count++;
   }
-  // printf("count %d\n", count);
 
   if (panel_horizontal) {
     int height = sysbar->area.height - 2 * sysbar->area.bg->border.width -
@@ -204,7 +205,6 @@ void on_change_systray(void* obj) {
 
     traywin->y = posy;
     traywin->x = posx;
-    // printf("systray %d : %d,%d\n", i, posx, posy);
     traywin->width = sysbar->icon_size;
     traywin->height = sysbar->icon_size;
     if (panel_horizontal) {
@@ -260,13 +260,12 @@ void start_net() {
                                  AnyPropertyType, &actual_type, &actual_format,
                                  &nitems, &bytes_after, &prop);
 
-    fprintf(stderr, "tint2 : another systray is running");
+    MESSAGE("tinto : another systray is running");
     if (ret == Success && prop) {
       pid = prop[1] * 256;
       pid += prop[0];
-      fprintf(stderr, " pid=%d", pid);
+      WARN("pid=%d", pid);
     }
-    fprintf(stderr, "\n");
     return;
   }
 
@@ -274,7 +273,7 @@ void start_net() {
   net_sel_win =
       XCreateSimpleWindow(server.dsp, server.root_win, -1, -1, 1, 1, 0, 0, 0);
 
-  // v0.3 trayer specification. tint2 always horizontal.
+  // v0.3 trayer specification. tinto always horizontal.
   // Vertical panel will draw the systray horizontal.
   long orient = 0;
   XChangeProperty(server.dsp, net_sel_win,
@@ -295,11 +294,10 @@ void start_net() {
   if (XGetSelectionOwner(server.dsp, server.atom._NET_SYSTEM_TRAY_SCREEN) !=
       net_sel_win) {
     stop_net();
-    fprintf(stderr, "tint2 : can't get systray manager\n");
+    MESSAGE("tinto : can't get systray manager\n");
     return;
   }
 
-  // fprintf(stderr, "tint2 : systray started\n");
   XClientMessageEvent ev;
   ev.type = ClientMessage;
   ev.window = server.root_win;
@@ -315,7 +313,6 @@ void start_net() {
 }
 
 void stop_net() {
-  // fprintf(stderr, "tint2 : systray stopped\n");
   if (systray.list_icons) {
     // remove_icon change systray.list_icons
     while (systray.list_icons)
@@ -333,11 +330,11 @@ void stop_net() {
 
 gboolean error;
 int window_error_handler(Display* d, XErrorEvent* e) {
-  d = d;
-  e = e;
+  UNUSED(d);
+
   error = TRUE;
   if (e->error_code != BadWindow) {
-    printf("error_handler %d\n", e->error_code);
+    WARN("error_handler %d.", e->error_code);
   }
   return 0;
 }
@@ -374,9 +371,8 @@ gboolean add_icon(Window id) {
   unsigned long mask = 0;
   XSetWindowAttributes set_attr;
   Visual* visual = server.visual;
-  // printf("icon with depth: %d, width %d, height %d\n", attr.depth,
   // attr.width, attr.height);
-  // printf("icon with depth: %d\n", attr.depth);
+
   if (attr.depth != server.depth || systray.alpha != 100 ||
       systray.brightness != 0 || systray.saturation != 0) {
     visual = attr.visual;
@@ -399,7 +395,7 @@ gboolean add_icon(Window id) {
   XSync(server.dsp, False);
   XSetErrorHandler(old);
   if (error != FALSE) {
-    fprintf(stderr, "tint2 : not icon_swallow\n");
+    MESSAGE("tinto not icon_swallow\n");
     XDestroyWindow(server.dsp, parent_window);
     return FALSE;
   }
@@ -418,12 +414,11 @@ gboolean add_icon(Window id) {
       if (data) {
         if (nbitem == 2) {
           // hide = ((data[1] & XEMBED_MAPPED) == 0);
-          // printf("hide %d\n", hide);
         }
         XFree(data);
       }
     } else {
-      fprintf(stderr, "tint2 : xembed error\n");
+      MESSAGE("tinto xembed error\n");
       XDestroyWindow(server.dsp, parent_window);
       return FALSE;
     }
@@ -460,7 +455,6 @@ gboolean add_icon(Window id) {
   else
     systray.list_icons =
         g_slist_insert_sorted(systray.list_icons, traywin, compare_traywindows);
-  // printf("add_icon id %lx, %d\n", id, g_slist_length(systray.list_icons));
 
   if (server.real_transparency || systray.alpha != 100 ||
       systray.brightness != 0 || systray.saturation != 0) {
@@ -471,7 +465,7 @@ gboolean add_icon(Window id) {
 
   // show the window
   if (!traywin->hide) XMapWindow(server.dsp, traywin->tray_id);
-  if (!traywin->hide && !panel->is_hidden) XMapRaised(server.dsp, traywin->id);
+  if (!traywin->hide && !panel->hidden) XMapRaised(server.dsp, traywin->id);
 
   // changed in systray
   systray.area.resize = 1;
@@ -484,7 +478,6 @@ void remove_icon(TrayWindow* traywin) {
 
   // remove from our list
   systray.list_icons = g_slist_remove(systray.list_icons, traywin);
-  // printf("remove_icon id %lx, %d\n", traywin->id);
 
   XSelectInput(server.dsp, traywin->tray_id, NoEventMask);
   if (traywin->damage) XDamageDestroy(server.dsp, traywin->damage);
@@ -531,9 +524,9 @@ void net_message(XClientMessageEvent* e) {
 
   default:
     if (opcode == server.atom._NET_SYSTEM_TRAY_MESSAGE_DATA)
-      printf("message from dockapp: %s\n", e->data.b);
+      WARN("message from dockapp: %s.", e->data.b);
     else
-      fprintf(stderr, "SYSTEM_TRAY : unknown message type\n");
+      WARN("SYSTEM_TRAY : unknown message type\n");
     break;
   }
 }
@@ -572,7 +565,7 @@ void systray_render_icon_now(void* t) {
   else if (traywin->depth == 32)
     f = XRenderFindStandardFormat(server.dsp, PictStandardARGB32);
   else {
-    printf("Strange tray icon found with depth: %d\n", traywin->depth);
+    WARN("Strange tray icon found with depth: %d.", traywin->depth);
     return;
   }
   Picture pict_image;
@@ -640,7 +633,7 @@ void systray_render_icon(TrayWindow* traywin) {
   } else {
     // comment by andreas: I'm still not sure, what exactly we need to do
     // here... Somehow trayicons which do not
-    // offer the same depth as tint2 does, need to draw a background pixmap, but
+    // offer the same depth as tinto does, need to draw a background pixmap, but
     // this cannot be done with
     // XCopyArea... So we actually need XRenderComposite???
     //			Pixmap pix = XCreatePixmap(server.dsp, server.root_win,
